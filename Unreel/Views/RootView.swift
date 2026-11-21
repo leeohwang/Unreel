@@ -113,6 +113,7 @@ struct RootView: View {
         }
         .fullScreenCover(isPresented: Binding(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
             WelcomeView { hasSeenWelcome = true }
+                .environmentObject(settings)
         }
     }
 
@@ -125,7 +126,7 @@ struct RootView: View {
                 .foregroundStyle(.primary)
             Spacer()
             if settings.dailyLimitMinutes > 0 {
-                Text(remainingText)
+                remainingText
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -165,9 +166,10 @@ struct RootView: View {
         navigator.currentPath.hasPrefix("/notifications") || navigator.currentPath.hasPrefix("/accounts/activity")
     }
 
-    private var remainingText: String {
+    private var remainingText: Text {
         let left = max(0, settings.dailyLimitMinutes * 60 - stats.today.secondsUsed)
-        return left == 0 ? "Limit reached" : "\(Int((Double(left) / 60).rounded(.up))) min left"
+        let minutes = Int((Double(left) / 60).rounded(.up))
+        return left == 0 ? Text("Limit reached") : Text("\(minutes) min left")
     }
 }
 

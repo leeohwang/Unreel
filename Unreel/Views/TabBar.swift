@@ -47,7 +47,7 @@ struct TabBar: View {
                         .frame(maxWidth: .infinity, minHeight: 49)
                     .foregroundStyle(Color.primary)
                 }
-                .accessibilityLabel(tab.title)
+                .accessibilityLabel(Text(LocalizedStringKey(tab.title)))
             }
         }
         .background(navigator.pageBackground)
