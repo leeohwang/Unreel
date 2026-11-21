@@ -27,7 +27,13 @@ struct SettingsView: View {
                 } header: {
                     Text("Blocking")
                 } footer: {
-                    Text("Reels and Explore are always blocked. With the feed blocked, the app opens to your messages.")
+                    Text("Reels and Explore are always blocked. With the feed blocked, the app opens to your messages. With it on, you see posts from people you follow, without Reels or suggested posts.")
+                }
+
+                Section {
+                    Toggle("Play Reels friends send", isOn: $settings.allowDmReels)
+                } footer: {
+                    Text("A Reel someone sends you in a chat plays. Swiping to more Reels takes you back to the chat.")
                 }
 
                 Section {
@@ -52,7 +58,7 @@ struct SettingsView: View {
 
                 Section {
                     Link("Privacy policy", destination: Config.privacyPolicyURL)
-                    Link("Report a problem", destination: Config.supportURL)
+                    Link("Report a problem", destination: Config.reportProblemURL(rulesVersion: rulesStore.rules.version))
                     LabeledContent("Blocking rules", value: "v\(rulesStore.rules.version)")
                 } footer: {
                     Text("Unreel is free and open source. It is not affiliated with, endorsed by, or sponsored by Instagram or Meta.")

@@ -20,6 +20,24 @@ enum Analytics {
         return true
     }
 
+    /// Anonymous "Instagram changed something and the app broke" signal (e.g. the
+    /// create button or Instagram's bar wasn't found, or redirects loop). At most
+    /// once per kind per day per device, so it stays well inside the event budget.
+    static func breakage(_ what: String, rulesVersion: Int) {
+        guard UserDefaults.standard.object(forKey: AppSettings.Keys.shareStats) as? Bool ?? true,
+              startIfNeeded() else { return }
+        let key = "breakageSent." + what
+        let today = StatsStore.key(for: Date())
+        guard UserDefaults.standard.string(forKey: key) != today else { return }
+        UserDefaults.standard.set(today, forKey: key)
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        TelemetryDeck.signal("Unreel.breakage", parameters: [
+            "what": String(what.prefix(40)),
+            "rulesVersion": String(rulesVersion),
+            "appVersion": version,
+        ])
+    }
+
     /// Sends a summary of the most recent finished day that hasn't been sent yet.
     static func sendDailySummaryIfNeeded(stats: StatsStore, settings: AppSettings, rules: Rules) {
         guard settings.shareStats, startIfNeeded() else { return }

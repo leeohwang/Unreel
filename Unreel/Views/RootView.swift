@@ -10,6 +10,8 @@ struct RootView: View {
     @StateObject private var navigator = WebNavigator()
     @State private var showSettings = false
     @State private var pickingFor: WebNavigator.CreateKind?
+    /// Where you left off last time, shown until Instagram paints (see WebNavigator.saveSnapshot).
+    @State private var launchSnapshot = UIImage(contentsOfFile: WebNavigator.snapshotURL.path)
     @State private var extendedUntil: Date?
     @State private var now = Date()
 
@@ -27,9 +29,22 @@ struct RootView: View {
             // No divider under the header: Instagram's pages start with their
             // own header row, so the two read as one header, as in the app.
             topBar
-            InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed, navigator: navigator) { kind, counts in
+            InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed,
+                             allowDmReels: settings.allowDmReels, navigator: navigator) { kind, counts in
                 if counts { stats.record(kind) }
             }
+            .overlay(alignment: .top) {
+                if !navigator.hasPainted, let launchSnapshot {
+                    Image(uiImage: launchSnapshot)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .clipped()
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeOut(duration: 0.2), value: navigator.hasPainted)
             .overlay(alignment: .top) {
                 // A thin progress line, like Instagram's own, instead of a spinner.
                 if navigator.isLoading {
@@ -81,6 +96,7 @@ struct RootView: View {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { stats.save() }
+            if phase == .inactive { navigator.saveSnapshot() }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(item: $pickingFor) { kind in

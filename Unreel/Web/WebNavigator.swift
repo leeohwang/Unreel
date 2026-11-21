@@ -19,6 +19,9 @@ final class WebNavigator: ObservableObject {
     /// True while the app is opening Instagram's create flow (it covers the
     /// web view so the home feed it passes through is never shown).
     @Published private(set) var isCreating = false
+    /// False until Instagram has drawn its first page; until then the app shows
+    /// a picture of where you left off, so launch feels instant.
+    @Published private(set) var hasPainted = false
     /// Set when the create flow could not be opened.
     @Published var createFailed = false
     private var createTimeout: Task<Void, Never>?
@@ -30,6 +33,11 @@ final class WebNavigator: ObservableObject {
 
     func attach(_ webView: WKWebView) {
         self.webView = webView
+        // Never leave the launch picture up if the first load stalls (offline, slow).
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            self?.hasPainted = true
+        }
         // WKWebView.url also changes on in-page (pushState) navigations.
         urlObservation = webView.observe(\.url, options: [.initial, .new]) { [weak self] webView, _ in
             let path = webView.url?.path ?? "/"
@@ -86,6 +94,29 @@ final class WebNavigator: ObservableObject {
         createTimeout?.cancel()
         isCreating = false
         if !ok { createFailed = true }
+    }
+
+    static var snapshotURL: URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("last-page.jpg")
+    }
+
+    func pageFinishedLoading() {
+        guard !hasPainted else { return }
+        // Instagram keeps drawing for a moment after the load event.
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            self?.hasPainted = true
+        }
+    }
+
+    /// Remembers what the screen looked like, for the next launch. Kept only in
+    /// this app's caches on this iPhone, protected while the phone is locked.
+    func saveSnapshot() {
+        guard hasPainted, !isCreating, let webView else { return }
+        webView.takeSnapshot(with: nil) { image, _ in
+            guard let data = image?.jpegData(compressionQuality: 0.7) else { return }
+            try? data.write(to: Self.snapshotURL, options: [.atomic, .completeFileProtection])
+        }
     }
 
     func goProfile() {

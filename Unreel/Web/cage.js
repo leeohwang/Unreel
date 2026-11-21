@@ -16,6 +16,16 @@
   // While the app is starting Instagram's create flow, which lives on the
   // (otherwise blocked) home feed, the feed rule steps aside until this time.
   var allowFeedUntil = 0;
+  // The last page the visitor was allowed to be on, and the chat a shared Reel
+  // was opened from (see allowFrom in check()).
+  var lastAllowedPath = null, reelOrigin = null;
+  var reported = {};
+  // Anonymous "Instagram changed something" signal, at most once per kind per page load.
+  function breakage(what) {
+    if (reported[what]) return;
+    reported[what] = true;
+    post({ type: 'breakage', what: what });
+  }
 
   function post(msg) {
     try { window.webkit.messageHandlers.unreel.postMessage(msg); } catch (e) {}
@@ -32,6 +42,11 @@
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
+    else sels = sels.concat(cfg.filteredFeedSelectors || []); // feed shown: no Reels in it
+    // Links to single Reels: kept inside chats when friends' Reels may play.
+    (cfg.reelLinkSelectors || []).forEach(function (sel) {
+      sels.push(cfg.allowDmReels ? 'html:not([data-unreel-path^="/direct/"]) ' + sel : sel);
+    });
     return sels.join(',\n') + ' { display: none !important; }\n' + (cfg.extraCSS || '');
   }
 
@@ -116,12 +131,67 @@
       if (!rules[i].re.test(path)) continue;
       var r = rules[i].rule;
       if (r.kind === 'feed' && Date.now() < allowFeedUntil) { lastPath = null; continue; }
+      // A Reel a friend sent: allowed when opened from a chat (allowFrom), so it
+      // plays. Swiping on to the next Reel comes from a Reel page, not a chat,
+      // so it is blocked and the visitor goes back to that chat.
+      if (r.allowFrom && cfg.allowDmReels) {
+        var from = null;
+        try { from = new RegExp(r.allowFrom); } catch (e) {}
+        if (from && lastAllowedPath && from.test(lastAllowedPath)) {
+          reelOrigin = lastAllowedPath;
+          lastAllowedPath = path;
+          return;
+        }
+        if (reelOrigin) {
+          post({ type: 'blocked', kind: r.kind, count: r.count !== false });
+          var back = reelOrigin;
+          reelOrigin = null;
+          lastPath = null;
+          navigate(back);
+          return;
+        }
+      }
       var target = r.redirect || fallback;
       if (target === path) return; // never loop
+      // Report (never stop blocking) when redirects pile up: a rule and Instagram
+      // are probably fighting.
+      if (tooManyRedirects()) breakage('redirect-loop');
       redirecting = true;
       post({ type: 'blocked', kind: r.kind, count: r.count !== false });
       location.replace(target);
       return;
+    }
+    lastAllowedPath = path;
+    if (!/^\/([^/]+\/)?reel\//.test(path)) reelOrigin = null;
+  }
+
+  // More than 8 redirects in 20 s.
+  function tooManyRedirects() {
+    var now = Date.now(), list = [];
+    try { list = JSON.parse(sessionStorage.getItem('unreel.redirects') || '[]'); } catch (e) {}
+    list = list.filter(function (t) { return now - t < 20000; });
+    list.push(now);
+    try { sessionStorage.setItem('unreel.redirects', JSON.stringify(list)); } catch (e) {}
+    return list.length > 8;
+  }
+
+  // With the home feed shown, hide suggested and sponsored posts. Instagram marks
+  // them only with text, so look for the label (rules list it in several languages).
+  function hideMarkedPosts() {
+    if (cfg.blockFeed || location.pathname !== '/') return;
+    var markers = cfg.feedHideTextMarkers || [];
+    if (!markers.length) return;
+    var posts = document.querySelectorAll('article:not([data-unreel-checked])');
+    for (var i = 0; i < posts.length; i++) {
+      var post_ = posts[i], spans = post_.querySelectorAll('span');
+      for (var j = 0; j < spans.length; j++) {
+        if (spans[j].childElementCount === 0 && markers.indexOf(spans[j].textContent.trim()) !== -1) {
+          post_.style.setProperty('display', 'none', 'important');
+          break;
+        }
+      }
+      // Instagram fills posts in after creating them, so only mark once loaded.
+      if (spans.length > 3) post_.setAttribute('data-unreel-checked', '');
     }
   }
 
@@ -135,9 +205,17 @@
   });
   window.addEventListener('popstate', check);
   document.addEventListener('DOMContentLoaded', applyStyle);
+  // Signed in, on a page that should have Instagram's bottom bar, and it never
+  // showed up: Instagram probably changed it, so the app's bar is all people get.
+  setTimeout(function () {
+    var signedIn = /(?:^|;\s*)ds_user_id=/.test(document.cookie);
+    var noBarPage = /^\/(direct|accounts|stories|create|challenge|p)\//.test(location.pathname);
+    if (signedIn && !noBarPage && igBarReported !== true) breakage('igbar-missing');
+  }, 20000);
   var observer = new MutationObserver(function () {
     if (!styleEl || !styleEl.isConnected) applyStyle();
     queueIgBar();
+    hideMarkedPosts();
   });
   observer.observe(document, { childList: true, subtree: true });
 
@@ -290,7 +368,7 @@
     pendingFile = new File([arr], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
     pendingUntil = Date.now() + 20000;
     allowFeedUntil = Date.now() + 20000;
-    var label = kind === 'story' ? 'Story' : 'Post';
+    var labels = (cfg.createLabels || {})[kind] || [kind === 'story' ? 'Story' : 'Post'];
     var fail = function (why) { pendingFile = null; allowFeedUntil = 0; post({ type: 'create', ok: false, why: why }); };
     if (location.pathname !== '/') navigate('/');
     waitFor(createButton, 15000, function (button) {
@@ -298,7 +376,10 @@
       // Instagram ignores the button until the feed has settled.
       setTimeout(function () {
         tap(button);
-        waitFor(function () { return menuItem(label); }, 4000, function (item) {
+        waitFor(function () {
+          for (var l = 0; l < labels.length; l++) { var m = menuItem(labels[l]); if (m) return m; }
+          return null;
+        }, 4000, function (item) {
           if (!item) return fail('no-menu');
           // Give the menu a moment to finish opening before choosing from it.
           setTimeout(function () { tap(item); }, 500);

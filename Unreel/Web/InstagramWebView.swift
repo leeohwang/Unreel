@@ -6,6 +6,7 @@ import WebKit
 struct InstagramWebView: UIViewRepresentable {
     let rules: Rules
     let blockFeed: Bool
+    let allowDmReels: Bool
     let navigator: WebNavigator
     let onBlocked: @MainActor (BlockKind, Bool) -> Void
 
@@ -80,22 +81,13 @@ struct InstagramWebView: UIViewRepresentable {
 
         init(parent: InstagramWebView) { self.parent = parent }
 
+        /// The rules plus the user's settings, as the page script reads them.
         private var configJSON: String {
-            struct PageConfig: Encodable {
-                let redirectPath: String
-                let blockFeed: Bool
-                let blockedPaths: [PathRule]
-                let hideSelectors: [String]
-                let feedSelectors: [String]
-                let igBarLinks: [String]
-                let extraCSS: String
-            }
-            let r = parent.rules
-            let page = PageConfig(redirectPath: r.redirectPath, blockFeed: parent.blockFeed,
-                                  blockedPaths: r.blockedPaths, hideSelectors: r.hideSelectors,
-                                  feedSelectors: r.feedSelectors, igBarLinks: r.igBarLinks ?? [],
-                                  extraCSS: r.extraCSS ?? "")
-            let data = (try? JSONEncoder().encode(page)) ?? Data("{}".utf8)
+            guard let rulesData = try? JSONEncoder().encode(parent.rules),
+                  var object = (try? JSONSerialization.jsonObject(with: rulesData)) as? [String: Any] else { return "{}" }
+            object["blockFeed"] = parent.blockFeed
+            object["allowDmReels"] = parent.allowDmReels
+            let data = (try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])) ?? Data("{}".utf8)
             return String(decoding: data, as: UTF8.self)
         }
 
@@ -128,7 +120,11 @@ struct InstagramWebView: UIViewRepresentable {
                 guard let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
                 parent.onBlocked(kind, body["count"] as? Bool ?? true)
             case "create":
-                parent.navigator.createFinished(ok: body["ok"] as? Bool ?? false)
+                let ok = body["ok"] as? Bool ?? false
+                parent.navigator.createFinished(ok: ok)
+                if !ok { Analytics.breakage("create-" + (body["why"] as? String ?? "unknown"), rulesVersion: parent.rules.version) }
+            case "breakage":
+                Analytics.breakage(body["what"] as? String ?? "unknown", rulesVersion: parent.rules.version)
             case "igBar":
                 parent.navigator.igBarVisible = body["visible"] as? Bool ?? false
             default:
@@ -163,7 +159,8 @@ struct InstagramWebView: UIViewRepresentable {
 
             let host = url.host?.lowercased() ?? ""
             if Self.isInstagram(host) {
-                if let rule = parent.rules.match(path: url.path.isEmpty ? "/" : url.path, blockFeed: parent.blockFeed) {
+                if let rule = parent.rules.match(path: url.path.isEmpty ? "/" : url.path, blockFeed: parent.blockFeed,
+                                                 fromPath: webView.url?.path, allowDmReels: parent.allowDmReels) {
                     decisionHandler(.cancel)
                     parent.onBlocked(rule.kind, rule.count ?? true)
                     let target = rule.redirect ?? parent.rules.redirectPath
@@ -184,6 +181,10 @@ struct InstagramWebView: UIViewRepresentable {
                      for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if action.targetFrame == nil { webView.load(action.request) }
             return nil
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            parent.navigator.pageFinishedLoading()
         }
 
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {

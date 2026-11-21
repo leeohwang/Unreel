@@ -10,11 +10,14 @@ const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/rules.j
 const page_html = `<!doctype html><html><head></head><body>
   <a id="home" href="/">Home</a><a id="reels" href="/reels/">Reels</a><a id="explore" href="/explore/">Search</a>
   <a id="tab" href="/someone/reels/">Profile reels</a><a id="clip" href="/someone/reel/abc/">clip</a>
-  <a id="dm" href="/direct/inbox/">DMs</a>
+  <a id="dm" href="/direct/inbox/">DMs</a><a id="dmclip" href="/reel/zzz/">shared reel</a>
+  <article id="p-normal"><span>a</span><span>b</span><span>c</span><span>friend's photo</span></article>
+  <article id="p-reel"><a href="/reel/qqq/">r</a></article>
+  <article id="p-sugg"><span>x</span><span>y</span><span>z</span><span>Suggested for you</span></article>
   <div id="igbar" class="x1 x2-bar" style="position:fixed;bottom:0;left:0;right:0;height:50px"><div><a href="/explore/">S</a></div></div>
   <div id="dialog" style="position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none"><a href="/direct/inbox/">x</a></div></body></html>`;
 
-async function makePage(browser, blockFeed, slowPath) {
+async function makePage(browser, blockFeed, slowPath, allowDmReels = true) {
   const page = await browser.newPage();
   page.msgs = [];
   await page.exposeFunction('__record', m => page.msgs.push(m));
@@ -22,14 +25,13 @@ async function makePage(browser, blockFeed, slowPath) {
     if (slowPath && new URL(r.request().url()).pathname === slowPath) await new Promise(res => setTimeout(res, 2500));
     await r.fulfill({ contentType: 'text/html', body: page_html });
   });
-  const cfg = { redirectPath: rules.redirectPath, blockFeed, blockedPaths: rules.blockedPaths,
-                hideSelectors: rules.hideSelectors, feedSelectors: rules.feedSelectors,
-                igBarLinks: rules.igBarLinks };
+  const cfg = Object.assign({}, rules, { blockFeed, allowDmReels });
   await page.addInitScript(`window.webkit = { messageHandlers: { unreel: { postMessage: m => window.__record(m) } } };
     window.__unreelConfig = ${JSON.stringify(cfg)};\n${cage}`);
   return page;
 }
 const settle = p => p.waitForTimeout(700);
+// Each test page starts with a clean redirect history.
 const pathOf = p => new URL(p.url()).pathname;
 const blocks = p => p.msgs.filter(m => m.type === 'blocked');
 const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display === 'none');
@@ -124,6 +126,54 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   assert.strictEqual(pathOf(page), '/explore/search/', 'Search button opens search');
   assert.ok(await page.evaluate(() => window.__navTest === 1), 'without a reload');
   assert.strictEqual(blocks(page).length, 0, 'not counted as a block');
+
+  // Reels friends send in DMs play; swiping on to more Reels goes back to the chat.
+  page = await makePage(browser, true);
+  await page.goto('https://www.instagram.com/direct/t/123/');
+  await settle(page);
+  assert.ok(!(await hidden(page, 'dmclip')), 'shared Reel link visible in a chat');
+  page.msgs = [];
+  await page.evaluate(() => history.pushState({}, '', '/reel/abc/'));
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/reel/abc/', 'Reel opened from a chat plays');
+  assert.strictEqual(blocks(page).length, 0, 'not counted');
+  await page.evaluate(() => history.pushState({}, '', '/reel/def/'));
+  await page.waitForTimeout(300);
+  assert.strictEqual(pathOf(page), '/direct/t/123/', 'next Reel sends you back to the chat');
+  assert.strictEqual(blocks(page).filter(m => m.count).length, 1, 'swipe counted once');
+  await page.waitForTimeout(3500); // let navigate()'s fallback settle
+  await page.goto('https://www.instagram.com/someone/');
+  await settle(page);
+  assert.ok(await hidden(page, 'dmclip'), 'Reel links hidden outside chats');
+  await page.evaluate(() => history.pushState({}, '', '/reel/abc/'));
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/direct/inbox/', 'Reel opened from elsewhere is blocked');
+
+  page = await makePage(browser, true, null, false);
+  await page.goto('https://www.instagram.com/direct/t/123/');
+  await settle(page);
+  assert.ok(await hidden(page, 'dmclip'), 'setting off: Reel links hidden in chats too');
+  await page.evaluate(() => history.pushState({}, '', '/reel/abc/'));
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/direct/inbox/', 'setting off: shared Reel blocked');
+
+  // Feed shown: Reels and suggested posts filtered out, friends' posts stay.
+  page = await makePage(browser, false);
+  await page.goto('https://www.instagram.com/');
+  await settle(page);
+  assert.ok(!(await hidden(page, 'p-normal')), "friend's post visible");
+  assert.ok(await hidden(page, 'p-reel'), 'Reel post hidden');
+  assert.ok(await hidden(page, 'p-sugg'), 'suggested post hidden');
+
+  // Redirect loop protection.
+  page = await makePage(browser, true);
+  await page.goto('https://www.instagram.com/direct/inbox/');
+  await page.evaluate(() => sessionStorage.setItem('unreel.redirects', JSON.stringify([1,2,3,4,5,6,7,8].map(() => Date.now()))));
+  page.msgs = [];
+  await page.evaluate(() => history.pushState({}, '', '/reels/'));
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/direct/inbox/', 'keeps blocking even in a loop');
+  assert.ok(page.msgs.some(m => m.type === 'breakage' && m.what === 'redirect-loop'), 'loop reported');
 
   await browser.close();
   console.log('All cage.js tests passed');

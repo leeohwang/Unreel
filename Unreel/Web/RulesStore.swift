@@ -7,6 +7,9 @@ struct PathRule: Codable, Equatable {
     var redirect: String?
     /// Whether this counts toward "blocked" stats. Defaults to true.
     var count: Bool?
+    /// Regex on the previous page's path: when it matches (and the user allows it),
+    /// this page is not blocked. Used to let a Reel a friend sent in a chat play.
+    var allowFrom: String?
 }
 
 struct Rules: Codable, Equatable {
@@ -23,14 +26,32 @@ struct Rules: Codable, Equatable {
     /// Extra CSS for cosmetic fixes (e.g. hiding a border). cage.js marks the page
     /// with html[data-unreel-path="…"] so rules can target one page. Optional.
     var extraCSS: String?
+    /// Links to single Reels. Hidden everywhere, or everywhere but chats when
+    /// Reels friends send may play.
+    var reelLinkSelectors: [String]?
+    /// Hidden when the home feed is shown (Reel posts in it).
+    var filteredFeedSelectors: [String]?
+    /// Labels of suggested / sponsored posts (several languages), hidden from the feed.
+    var feedHideTextMarkers: [String]?
+    /// Instagram's create-menu labels ("Post", "Story") in the languages we know.
+    var createLabels: [String: [String]]?
 
-    /// The first rule that blocks this path, honoring the feed setting.
-    func match(path: String, blockFeed: Bool) -> PathRule? {
+    /// The first rule that blocks this path, honoring the settings and, for rules
+    /// with `allowFrom`, the page the user is coming from.
+    func match(path: String, blockFeed: Bool, fromPath: String? = nil, allowDmReels: Bool = false) -> PathRule? {
         blockedPaths.first { rule in
             if rule.kind == .feed && !blockFeed { return false }
-            guard let regex = try? NSRegularExpression(pattern: rule.pattern) else { return false }
-            return regex.firstMatch(in: path, range: NSRange(path.startIndex..., in: path)) != nil
+            guard Self.matches(rule.pattern, path) else { return false }
+            if allowDmReels, let allowFrom = rule.allowFrom, let fromPath, Self.matches(allowFrom, fromPath) {
+                return false
+            }
+            return true
         }
+    }
+
+    private static func matches(_ pattern: String, _ string: String) -> Bool {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+        return regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)) != nil
     }
 
     static let bundled: Rules = {
@@ -65,19 +86,24 @@ final class RulesStore: ObservableObject {
         rules = current
     }
 
-    /// Fetches the remote rules at most once an hour.
+    /// Fetches the remote rules each time the app comes to the foreground (at most
+    /// every 5 minutes). A newer version is applied to the open page right away.
     func refresh() async {
-        if let lastFetch, Date().timeIntervalSince(lastFetch) < 3600 { return }
+        if let lastFetch, Date().timeIntervalSince(lastFetch) < 300 { return }
         lastFetch = Date()
         var request = URLRequest(url: Config.remoteRulesURL)
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.timeoutInterval = 15
         guard let (data, response) = try? await URLSession.shared.data(for: request),
-              (response as? HTTPURLResponse)?.statusCode == 200,
-              let remote = try? JSONDecoder().decode(Rules.self, from: data),
-              remote.version > rules.version,
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return }
+        guard let remote = try? JSONDecoder().decode(Rules.self, from: data),
               remote.blockedPaths.allSatisfy({ (try? NSRegularExpression(pattern: $0.pattern)) != nil })
-        else { return }
+        else {
+            // A rules file we published that this build can't read: worth knowing fast.
+            Analytics.breakage("rules-invalid", rulesVersion: rules.version)
+            return
+        }
+        guard remote.version > rules.version else { return }
         try? data.write(to: Self.cacheURL, options: .atomic)
         rules = remote
     }
