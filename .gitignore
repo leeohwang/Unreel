@@ -5,3 +5,5 @@ DerivedData/
 .DS_Store
 node_modules/
 Unreel/Info.plist
+Extensions/*/Info.plist
+*.entitlements

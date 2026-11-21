@@ -7,6 +7,9 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @AppStorage("lockOffered") private var lockOffered = false
+    @StateObject private var deepLink = DeepLink.shared
+    @State private var showLockOffer = false
     @StateObject private var navigator = WebNavigator()
     @State private var showSettings = false
     @State private var pickingFor: WebNavigator.CreateKind?
@@ -97,8 +100,16 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { stats.save() }
             if phase == .inactive { navigator.saveSnapshot() }
+            if phase == .active { offerLockIfDue() }
         }
+        // Tapped a notification from the Screen Time shield ("Open Unreel"): go to that page.
+        .onChange(of: deepLink.pendingPath) { _, path in openDeepLink(path) }
+        .onAppear { openDeepLink(deepLink.pendingPath) }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showLockOffer) {
+            LockOfferView { showLockOffer = false }
+                .presentationDetents([.medium, .large])
+        }
         .sheet(item: $pickingFor) { kind in
             PhotoPicker { jpeg in
                 pickingFor = nil
@@ -160,6 +171,23 @@ struct RootView: View {
         .foregroundStyle(.primary)
         .padding(.horizontal, 16)
         .frame(height: 44)
+    }
+
+    private func openDeepLink(_ path: String?) {
+        guard let path else { return }
+        deepLink.pendingPath = nil
+        showSettings = false
+        navigator.go(path)
+    }
+
+    /// The Screen Time lock is offered once, after the app has been used for a
+    /// minute or more on two different days, so people have seen it work first.
+    private func offerLockIfDue() {
+        guard hasSeenWelcome, !lockOffered, !LockStore.isEnabled else { return }
+        let goodDays = stats.days.values.filter { $0.secondsUsed >= 60 }.count
+        guard goodDays >= 2 else { return }
+        lockOffered = true
+        showLockOffer = true
     }
 
     private var isOnActivity: Bool {

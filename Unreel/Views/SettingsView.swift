@@ -46,6 +46,8 @@ struct SettingsView: View {
                     Text("After this much time in the app each day, you'll see a reminder to stop.")
                 }
 
+                LockSection()
+
                 Section {
                     Toggle("Share anonymous stats", isOn: $settings.shareStats)
                 } footer: {

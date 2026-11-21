@@ -26,6 +26,8 @@ final class WebNavigator: ObservableObject {
     @Published var createFailed = false
     private var createTimeout: Task<Void, Never>?
     private weak var webView: WKWebView?
+    /// A page asked for before the first load finished (e.g. a notification tap at launch).
+    private var queuedPath: String?
     private var urlObservation: NSKeyValueObservation?
     private var loadingObservation: NSKeyValueObservation?
     private var progressObservation: NSKeyValueObservation?
@@ -61,7 +63,10 @@ final class WebNavigator: ObservableObject {
 
     /// Navigates inside Instagram's page when it can (fast), else loads the URL.
     func go(_ path: String) {
-        guard let webView else { return }
+        guard let webView else {
+            queuedPath = path
+            return
+        }
         let literal = (try? String(decoding: JSONEncoder().encode(path), as: UTF8.self)) ?? "\"/\""
         webView.evaluateJavaScript("window.__unreel ? window.__unreel.navigate(\(literal)) : 'none'") { result, _ in
             if (result as? String) == nil || (result as? String) == "none" {
@@ -101,6 +106,10 @@ final class WebNavigator: ObservableObject {
     }
 
     func pageFinishedLoading() {
+        if let path = queuedPath {
+            queuedPath = nil
+            go(path)
+        }
         guard !hasPainted else { return }
         // Instagram keeps drawing for a moment after the load event.
         Task { [weak self] in
