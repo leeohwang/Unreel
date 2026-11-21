@@ -69,6 +69,13 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   assert.ok(await hidden(page, 'igbar'), "Instagram's bottom bar hidden");
   assert.ok(!(await hidden(page, 'dialog')), 'full-screen fixed layer not hidden');
 
+  assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/direct/inbox/')), 'spa', 'uses an existing link');
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/direct/inbox/', 'link navigation lands');
+  assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/accounts/activity/')), 'load', 'falls back to a load');
+  await settle(page);
+  assert.strictEqual(pathOf(page), '/accounts/activity/', 'fallback load lands');
+
   page = await makePage(browser, false);
   await page.goto('https://www.instagram.com/');
   await settle(page);

@@ -42,6 +42,7 @@
     if (!sels.length || !document.body) return;
     var links = document.querySelectorAll(sels.join(','));
     for (var i = 0; i < links.length; i++) {
+      if (links[i].closest('[data-unreel-hidden]')) continue; // already hidden
       for (var el = links[i].parentElement; el && el !== document.body; el = el.parentElement) {
         if (getComputedStyle(el).position !== 'fixed') continue;
         var r = el.getBoundingClientRect();
@@ -125,10 +126,22 @@
     return null;
   }
 
+  // Moves to `path` the fast way when possible. Instagram is a single-page app:
+  // clicking one of its own links (its hidden bottom bar keeps them in the page)
+  // lets its router swap the view in place, without reloading the whole site.
+  // Falls back to a normal page load.
+  function navigate(path) {
+    if (location.pathname === path) return 'same';
+    var link = document.querySelector('a[href="' + path.replace(/"/g, '') + '"]');
+    if (link) { link.click(); return 'spa'; }
+    location.assign(path);
+    return 'load';
+  }
+
   function goProfile() {
     var name = null;
     try { name = ownUsername(); } catch (e) {}
-    location.assign(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
+    return navigate(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
   }
 
   window.__unreel = {
@@ -139,7 +152,8 @@
       lastPath = null;
       check();
     },
-    goProfile: goProfile
+    goProfile: goProfile,
+    navigate: navigate
   };
 
   compile();

@@ -25,8 +25,15 @@ final class WebNavigator: ObservableObject {
         }
     }
 
+    /// Navigates inside Instagram's page when it can (fast), else loads the URL.
     func go(_ path: String) {
-        webView?.load(URLRequest(url: InstagramWebView.instagramURL(path)))
+        guard let webView else { return }
+        let literal = (try? String(decoding: JSONEncoder().encode(path), as: UTF8.self)) ?? "\"/\""
+        webView.evaluateJavaScript("window.__unreel ? window.__unreel.navigate(\(literal)) : 'none'") { result, _ in
+            if (result as? String) == nil || (result as? String) == "none" {
+                webView.load(URLRequest(url: InstagramWebView.instagramURL(path)))
+            }
+        }
     }
 
     func goProfile() {
