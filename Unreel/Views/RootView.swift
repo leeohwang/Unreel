@@ -90,6 +90,17 @@ struct RootView: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
+            // Instagram's mobile bar has no Activity button (it lives on the
+            // blocked home feed), so it gets one here.
+            Button {
+                navigator.lastTappedTab = "activity"
+                navigator.go("/accounts/activity/")
+            } label: {
+                Image(systemName: isOnActivity ? "heart.fill" : "heart")
+                    .imageScale(.large)
+            }
+            .accessibilityLabel("Activity")
+            .padding(.trailing, 8)
             Button { showSettings = true } label: {
                 Image(systemName: "gearshape")
                     .imageScale(.large)
@@ -98,6 +109,10 @@ struct RootView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+
+    private var isOnActivity: Bool {
+        navigator.currentPath.hasPrefix("/notifications") || navigator.currentPath.hasPrefix("/accounts/activity")
     }
 
     private var remainingText: String {
