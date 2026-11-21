@@ -22,10 +22,10 @@ struct TabBar: View {
             list.append(Tab(id: "home", title: "Home", icon: "house", path: "/", matches: { $0 == "/" }))
         }
         list += [
-            Tab(id: "dm", title: "Messages", icon: "paperplane", path: "/direct/inbox/",
-                matches: { $0.hasPrefix("/direct") }),
             Tab(id: "search", title: "Search", icon: "magnifyingglass", path: "/explore/search/",
                 matches: { $0.hasPrefix("/explore") }),
+            Tab(id: "dm", title: "Messages", icon: "paperplane", path: "/direct/inbox/",
+                matches: { $0.hasPrefix("/direct") }),
             Tab(id: "profile", title: "Profile", icon: "person.crop.circle", path: nil, matches: { _ in false }),
         ]
         return list
