@@ -44,14 +44,13 @@ struct TabBar: View {
                 } label: {
                     // Icons only, like Instagram's own bar.
                     Image(systemName: selected && tab.id != "search" ? tab.icon + ".fill" : tab.icon)
-                        .font(.system(size: 24, weight: selected ? .semibold : .regular))
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .font(.system(size: 24, weight: .regular))
+                        .frame(maxWidth: .infinity, minHeight: 49)
                     .foregroundStyle(Color.primary)
                 }
                 .accessibilityLabel(tab.title)
             }
         }
-        .padding(.top, 2)
-        .background(Color(uiColor: .systemBackground))
+        .background(navigator.pageBackground)
     }
 }

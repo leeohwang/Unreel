@@ -23,8 +23,9 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // No divider under the header: Instagram's pages start with their
+            // own header row, so the two read as one header, as in the app.
             topBar
-            Divider()
             InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed, navigator: navigator) { kind, counts in
                 if counts { stats.record(kind) }
             }
@@ -46,10 +47,14 @@ struct RootView: View {
             // On pages where Instagram leaves it out (the DM inbox and chats),
             // show ours so there is always a way out.
             if !navigator.igBarVisible {
-                Divider()
+                Rectangle()
+                    .fill(Color(uiColor: .pageSeparator))
+                    .frame(height: 1)
                 TabBar(navigator: navigator, showHome: !settings.blockFeed)
             }
         }
+        // Status bar, home indicator and overscroll areas take the page's colour.
+        .background(navigator.pageBackground.ignoresSafeArea())
         .overlay {
             if limitReached {
                 LimitReachedView(minutes: settings.dailyLimitMinutes) {
@@ -94,12 +99,12 @@ struct RootView: View {
                 navigator.go("/accounts/activity/")
             } label: {
                 Image(systemName: isOnActivity ? "heart.fill" : "heart")
-                    .font(.system(size: 22))
+                    .font(.system(size: 24))
             }
             .accessibilityLabel("Activity")
             Button { showSettings = true } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 22))
+                    .font(.system(size: 24))
             }
             .accessibilityLabel("Settings")
         }

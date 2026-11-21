@@ -33,6 +33,11 @@ struct InstagramWebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.allowsLinkPreview = false
+        // Transparent until Instagram paints, so dark mode never flashes white;
+        // RootView fills in behind it with the page's colour.
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
 
         let refresh = UIRefreshControl()
         refresh.addTarget(context.coordinator, action: #selector(Coordinator.pullToRefresh(_:)), for: .valueChanged)

@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 import WebKit
 
 /// Lets native UI (the bottom tab bar) drive the web view and know where it is.
@@ -12,10 +12,15 @@ final class WebNavigator: ObservableObject {
     @Published var igBarVisible = false
     /// The tab the user last tapped, for pages whose path no tab recognizes (e.g. their profile).
     @Published var lastTappedTab: String?
+    /// The page's own background colour, so the header, bars and safe areas
+    /// around the web view blend into it (Instagram's dark mode is a dark navy,
+    /// not black). WebKit derives `underPageBackgroundColor` from the page.
+    @Published private(set) var pageBackground = Color(uiColor: .pageFallback)
     private weak var webView: WKWebView?
     private var urlObservation: NSKeyValueObservation?
     private var loadingObservation: NSKeyValueObservation?
     private var progressObservation: NSKeyValueObservation?
+    private var backgroundObservation: NSKeyValueObservation?
 
     func attach(_ webView: WKWebView) {
         self.webView = webView
@@ -32,6 +37,12 @@ final class WebNavigator: ObservableObject {
             let value = webView.estimatedProgress
             Task { @MainActor in self?.progress = value }
         }
+        backgroundObservation = webView.observe(\.underPageBackgroundColor, options: [.new]) { [weak self] webView, _ in
+            // Ignore the colour WebKit reports before Instagram has painted anything.
+            guard webView.url?.host?.hasSuffix("instagram.com") == true,
+                  let color = webView.underPageBackgroundColor else { return }
+            Task { @MainActor in self?.pageBackground = Color(uiColor: color) }
+        }
     }
 
     /// Navigates inside Instagram's page when it can (fast), else loads the URL.
@@ -47,5 +58,21 @@ final class WebNavigator: ObservableObject {
 
     func goProfile() {
         webView?.evaluateJavaScript("window.__unreel && window.__unreel.goProfile();")
+    }
+}
+
+extension UIColor {
+    /// Instagram's page background, used until the page reports its own.
+    static let pageFallback = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 12 / 255, green: 16 / 255, blue: 20 / 255, alpha: 1)
+            : .white
+    }
+
+    /// Instagram's hairline colour (the line above its tab bar).
+    static let pageSeparator = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 54 / 255, alpha: 1)
+            : UIColor(white: 219 / 255, alpha: 1)
     }
 }
