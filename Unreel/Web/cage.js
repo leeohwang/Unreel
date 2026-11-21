@@ -13,6 +13,9 @@
   // (seconds on a slow device), and without this the 400 ms timer would fire
   // replace() again and again: overcounting blocks and restarting the load.
   var redirecting = false;
+  // While the app is starting Instagram's create flow, which lives on the
+  // (otherwise blocked) home feed, the feed rule steps aside until this time.
+  var allowFeedUntil = 0;
 
   function post(msg) {
     try { window.webkit.messageHandlers.unreel.postMessage(msg); } catch (e) {}
@@ -29,7 +32,7 @@
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
-    return sels.join(',\n') + ' { display: none !important; }';
+    return sels.join(',\n') + ' { display: none !important; }\n' + (cfg.extraCSS || '');
   }
 
   // Earlier builds learned a CSS rule that hid Instagram's bottom bar. The bar
@@ -101,14 +104,18 @@
   }
 
   function check() {
-    if (redirecting) return;
     var path = location.pathname;
+    // Lets rules' CSS target a page, e.g. html[data-unreel-path="/direct/inbox/"].
+    var root = document.documentElement;
+    if (root && root.getAttribute('data-unreel-path') !== path) root.setAttribute('data-unreel-path', path);
+    if (redirecting) return;
     if (path === lastPath) return;
     lastPath = path;
     var fallback = cfg.redirectPath || '/direct/inbox/';
     for (var i = 0; i < rules.length; i++) {
       if (!rules[i].re.test(path)) continue;
       var r = rules[i].rule;
+      if (r.kind === 'feed' && Date.now() < allowFeedUntil) { lastPath = null; continue; }
       var target = r.redirect || fallback;
       if (target === path) return; // never loop
       redirecting = true;
@@ -202,6 +209,111 @@
     return navigate(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
   }
 
+  // Creating a post or story. Instagram's mobile site only offers this from the
+  // "+" on the home feed's header: "+" opens a Post / Story menu, and each item
+  // opens a file input. The app picks the photo natively (PHPicker) and hands it
+  // over here; this opens Instagram's menu and gives the photo to the file input
+  // Instagram asks for, then Instagram's own editor (/create/style/, or the
+  // story editor) takes over. Nothing is posted until the user taps Share.
+  var pendingFile = null, pendingUntil = 0;
+  var nativeFileClick = HTMLInputElement.prototype.click;
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file' && pendingFile && Date.now() < pendingUntil) {
+      var input = this, file = pendingFile;
+      pendingFile = null;
+      // Answer the way a real picker does: later, not inside click().
+      // Instagram is not ready for the change event until click() returns.
+      setTimeout(function () {
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }, 100);
+      return;
+    }
+    return nativeFileClick.apply(this, arguments);
+  };
+
+  // Instagram's menus open on pointer events, not on a bare click().
+  function tap(el) {
+    var r = el.getBoundingClientRect();
+    var o = { bubbles: true, cancelable: true, composed: true, view: window, button: 0, buttons: 1,
+              clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
+              pointerId: 1, pointerType: 'touch', isPrimary: true };
+    ['pointerdown', 'mousedown'].forEach(function (t) {
+      el.dispatchEvent(t.indexOf('pointer') === 0 ? new PointerEvent(t, o) : new MouseEvent(t, o));
+    });
+    o.buttons = 0;
+    ['pointerup', 'mouseup', 'click'].forEach(function (t) {
+      el.dispatchEvent(t.indexOf('pointer') === 0 ? new PointerEvent(t, o) : new MouseEvent(t, o));
+    });
+  }
+
+  // The feed header's "+" is the a[href="#"] next to its Notifications link.
+  function createButton() {
+    var notif = document.querySelector('a[href="/notifications/"]');
+    for (var el = notif && notif.parentElement, n = 0; el && n < 5; el = el.parentElement, n++) {
+      var a = el.querySelector('a[href="#"]');
+      if (a && a.querySelector('svg')) return a;
+    }
+    return null;
+  }
+
+  function menuItem(label) {
+    var dialogs = document.querySelectorAll('[role="dialog"]');
+    for (var i = 0; i < dialogs.length; i++) {
+      var spans = dialogs[i].querySelectorAll('span');
+      for (var j = 0; j < spans.length; j++) {
+        if (spans[j].childElementCount === 0 && spans[j].textContent.trim() === label) {
+          return spans[j].closest('[role="button"],a,button') || spans[j];
+        }
+      }
+    }
+    return null;
+  }
+
+  function waitFor(find, ms, done) {
+    var until = Date.now() + ms;
+    (function poll() {
+      var el = find();
+      if (el) return done(el);
+      if (Date.now() > until) return done(null);
+      setTimeout(poll, 150);
+    })();
+  }
+
+  // kind: 'post' or 'story'. base64: a JPEG (Instagram's inputs take JPEG).
+  function create(kind, base64) {
+    var bytes = atob(base64), arr = new Uint8Array(bytes.length);
+    for (var i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    pendingFile = new File([arr], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+    pendingUntil = Date.now() + 20000;
+    allowFeedUntil = Date.now() + 20000;
+    var label = kind === 'story' ? 'Story' : 'Post';
+    var fail = function (why) { pendingFile = null; allowFeedUntil = 0; post({ type: 'create', ok: false, why: why }); };
+    if (location.pathname !== '/') navigate('/');
+    waitFor(createButton, 15000, function (button) {
+      if (!button) return fail('no-button');
+      // Instagram ignores the button until the feed has settled.
+      setTimeout(function () {
+        tap(button);
+        waitFor(function () { return menuItem(label); }, 4000, function (item) {
+          if (!item) return fail('no-menu');
+          // Give the menu a moment to finish opening before choosing from it.
+          setTimeout(function () { tap(item); }, 500);
+          // Leaving the feed (into the editor) ends the exception right away.
+          waitFor(function () { return location.pathname !== '/' ? 1 : null; }, 8000, function (left) {
+            allowFeedUntil = 0;
+            if (!left) { pendingFile = null; lastPath = null; check(); return post({ type: 'create', ok: false, why: 'no-editor' }); }
+            post({ type: 'create', ok: true, path: location.pathname });
+          });
+        });
+      }, 2000);
+    });
+    return 'started';
+  }
+
   window.__unreel = {
     configure: function (next) {
       cfg = next || {};
@@ -211,7 +323,8 @@
       check();
     },
     goProfile: goProfile,
-    navigate: navigate
+    navigate: navigate,
+    create: create
   };
 
   compile();

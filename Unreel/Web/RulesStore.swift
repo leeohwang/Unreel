@@ -20,6 +20,9 @@ struct Rules: Codable, Equatable {
     /// bar is on screen; the app shows its own tab bar only where it isn't (e.g. DMs).
     /// Optional so older rules files still decode.
     var igBarLinks: [String]?
+    /// Extra CSS for cosmetic fixes (e.g. hiding a border). cage.js marks the page
+    /// with html[data-unreel-path="…"] so rules can target one page. Optional.
+    var extraCSS: String?
 
     /// The first rule that blocks this path, honoring the feed setting.
     func match(path: String, blockFeed: Bool) -> PathRule? {

@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -22,5 +22,6 @@
   "igBarLinks": [
     "a[href=\"/explore/\"]",
     "a[href=\"/direct/inbox/\"]"
-  ]
+  ],
+  "extraCSS": "html[data-unreel-path^=\"/direct/\"] [role=\"navigation\"] > div { border-right-width: 0 !important; }\nhtml[data-unreel-path=\"/direct/inbox/\"] [role=\"navigation\"] [role=\"button\"]:has(svg[aria-label=\"Back\"]) { visibility: hidden !important; pointer-events: none !important; }"
 }

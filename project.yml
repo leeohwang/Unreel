@@ -25,6 +25,8 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.productivity
+        NSCameraUsageDescription: Take a photo or video to post.
+        NSMicrophoneUsageDescription: Record video with sound to post.
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

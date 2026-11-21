@@ -16,6 +16,12 @@ final class WebNavigator: ObservableObject {
     /// around the web view blend into it (Instagram's dark mode is a dark navy,
     /// not black). WebKit derives `underPageBackgroundColor` from the page.
     @Published private(set) var pageBackground = Color(uiColor: .pageFallback)
+    /// True while the app is opening Instagram's create flow (it covers the
+    /// web view so the home feed it passes through is never shown).
+    @Published private(set) var isCreating = false
+    /// Set when the create flow could not be opened.
+    @Published var createFailed = false
+    private var createTimeout: Task<Void, Never>?
     private weak var webView: WKWebView?
     private var urlObservation: NSKeyValueObservation?
     private var loadingObservation: NSKeyValueObservation?
@@ -54,6 +60,32 @@ final class WebNavigator: ObservableObject {
                 webView.load(URLRequest(url: InstagramWebView.instagramURL(path)))
             }
         }
+    }
+
+    enum CreateKind: String { case post, story }
+
+    /// Hands a photo to Instagram's own create flow (see `create` in cage.js).
+    /// Instagram's editor opens with it; nothing is shared until the user taps Share.
+    func create(_ kind: CreateKind, jpeg: Data) {
+        guard let webView else { return }
+        isCreating = true
+        createTimeout?.cancel()
+        createTimeout = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(25))
+            guard !Task.isCancelled else { return }
+            self?.createFinished(ok: false)
+        }
+        let script = "window.__unreel ? window.__unreel.create('\(kind.rawValue)', '\(jpeg.base64EncodedString())') : 'none'"
+        webView.evaluateJavaScript(script) { [weak self] result, _ in
+            if (result as? String) != "started" { Task { @MainActor in self?.createFinished(ok: false) } }
+        }
+    }
+
+    func createFinished(ok: Bool) {
+        guard isCreating else { return }
+        createTimeout?.cancel()
+        isCreating = false
+        if !ok { createFailed = true }
     }
 
     func goProfile() {

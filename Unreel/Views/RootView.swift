@@ -9,6 +9,7 @@ struct RootView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @StateObject private var navigator = WebNavigator()
     @State private var showSettings = false
+    @State private var pickingFor: WebNavigator.CreateKind?
     @State private var extendedUntil: Date?
     @State private var now = Date()
 
@@ -43,6 +44,15 @@ struct RootView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: navigator.isLoading)
+            .overlay {
+                // Covers the home feed that Instagram's create flow starts from.
+                if navigator.isCreating {
+                    ZStack {
+                        navigator.pageBackground
+                        ProgressView()
+                    }
+                }
+            }
             // Instagram's own bottom bar (with Reels removed) is the main navigation.
             // On pages where Instagram leaves it out (the DM inbox and chats),
             // show ours so there is always a way out.
@@ -73,6 +83,18 @@ struct RootView: View {
             if phase != .active { stats.save() }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(item: $pickingFor) { kind in
+            PhotoPicker { jpeg in
+                pickingFor = nil
+                if let jpeg { navigator.create(kind, jpeg: jpeg) }
+            }
+            .ignoresSafeArea()
+        }
+        .alert("Couldn't open Instagram's editor", isPresented: $navigator.createFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Instagram may have changed its page. Try again in a moment.")
+        }
         .fullScreenCover(isPresented: Binding(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
             WelcomeView { hasSeenWelcome = true }
         }
@@ -92,6 +114,16 @@ struct RootView: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
+            // Instagram's "+" (Post / Story) sits on its home feed header, which
+            // is blocked, so it gets one here too.
+            Menu {
+                Button { pickingFor = .post } label: { Label("Post", systemImage: "square.grid.3x3") }
+                Button { pickingFor = .story } label: { Label("Story", systemImage: "plus.circle.dashed") }
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 24))
+            }
+            .accessibilityLabel("Create")
             // Instagram's mobile bar has no Activity button (it lives on the
             // blocked home feed), so it gets one here.
             Button {
@@ -121,4 +153,8 @@ struct RootView: View {
         let left = max(0, settings.dailyLimitMinutes * 60 - stats.today.secondsUsed)
         return left == 0 ? "Limit reached" : "\(Int((Double(left) / 60).rounded(.up))) min left"
     }
+}
+
+extension WebNavigator.CreateKind: Identifiable {
+    var id: String { rawValue }
 }

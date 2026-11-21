@@ -88,11 +88,13 @@ struct InstagramWebView: UIViewRepresentable {
                 let hideSelectors: [String]
                 let feedSelectors: [String]
                 let igBarLinks: [String]
+                let extraCSS: String
             }
             let r = parent.rules
             let page = PageConfig(redirectPath: r.redirectPath, blockFeed: parent.blockFeed,
                                   blockedPaths: r.blockedPaths, hideSelectors: r.hideSelectors,
-                                  feedSelectors: r.feedSelectors, igBarLinks: r.igBarLinks ?? [])
+                                  feedSelectors: r.feedSelectors, igBarLinks: r.igBarLinks ?? [],
+                                  extraCSS: r.extraCSS ?? "")
             let data = (try? JSONEncoder().encode(page)) ?? Data("{}".utf8)
             return String(decoding: data, as: UTF8.self)
         }
@@ -125,6 +127,8 @@ struct InstagramWebView: UIViewRepresentable {
             case "blocked":
                 guard let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
                 parent.onBlocked(kind, body["count"] as? Bool ?? true)
+            case "create":
+                parent.navigator.createFinished(ok: body["ok"] as? Bool ?? false)
             case "igBar":
                 parent.navigator.igBarVisible = body["visible"] as? Bool ?? false
             default:
