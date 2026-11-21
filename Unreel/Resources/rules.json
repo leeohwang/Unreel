@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "redirectPath": "/direct/inbox/",
+  "minutesPerBlockedVisit": 2,
+  "blockedPaths": [
+    { "pattern": "^/reels?(/|$)", "kind": "reels" },
+    { "pattern": "^/[^/]+/reels?(/|$)", "kind": "reels" },
+    { "pattern": "^/explore/?$", "kind": "explore", "redirect": "/explore/search/", "count": false },
+    { "pattern": "^/explore/(?!search)", "kind": "explore" },
+    { "pattern": "^/?$", "kind": "feed", "count": false }
+  ],
+  "hideSelectors": [
+    "a[href=\"/reels/\"]",
+    "a[href$=\"/reels/\"]",
+    "a[href*=\"/reel/\"]"
+  ],
+  "feedSelectors": [
+    "a[href=\"/\"]"
+  ]
+}
