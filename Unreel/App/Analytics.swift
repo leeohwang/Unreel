@@ -12,7 +12,7 @@ enum Analytics {
     private static func startIfNeeded() -> Bool {
         if started { return true }
         guard !Config.telemetryDeckAppID.isEmpty else { return false }
-        var config = TelemetryDeck.Config(appID: Config.telemetryDeckAppID)
+        let config = TelemetryDeck.Config(appID: Config.telemetryDeckAppID)
         // Don't spend the event budget on automatic session signals; App Store Connect already counts users.
         config.sendNewSessionBeganSignal = false
         TelemetryDeck.initialize(config: config)
