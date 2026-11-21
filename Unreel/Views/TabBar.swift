@@ -34,9 +34,12 @@ struct TabBar: View {
 
     var body: some View {
         HStack {
+            let pathMatch = tabs.first { $0.matches(navigator.currentPath) }?.id
+            let selectedID = pathMatch ?? navigator.lastTappedTab
             ForEach(tabs) { tab in
-                let selected = tab.matches(navigator.currentPath)
+                let selected = tab.id == selectedID
                 Button {
+                    navigator.lastTappedTab = tab.id
                     if let path = tab.path { navigator.go(path) } else { navigator.goProfile() }
                 } label: {
                     VStack(spacing: 3) {

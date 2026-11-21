@@ -5,8 +5,12 @@ import WebKit
 @MainActor
 final class WebNavigator: ObservableObject {
     @Published private(set) var currentPath = "/"
+    @Published private(set) var isLoading = false
+    /// The tab the user last tapped, for pages whose path no tab recognizes (e.g. their profile).
+    @Published var lastTappedTab: String?
     private weak var webView: WKWebView?
     private var urlObservation: NSKeyValueObservation?
+    private var loadingObservation: NSKeyValueObservation?
 
     func attach(_ webView: WKWebView) {
         self.webView = webView
@@ -14,6 +18,10 @@ final class WebNavigator: ObservableObject {
         urlObservation = webView.observe(\.url, options: [.initial, .new]) { [weak self] webView, _ in
             let path = webView.url?.path ?? "/"
             Task { @MainActor in self?.currentPath = path.isEmpty ? "/" : path }
+        }
+        loadingObservation = webView.observe(\.isLoading, options: [.initial, .new]) { [weak self] webView, _ in
+            let loading = webView.isLoading
+            Task { @MainActor in self?.isLoading = loading }
         }
     }
 

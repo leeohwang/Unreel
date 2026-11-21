@@ -29,6 +29,16 @@ struct RootView: View {
             InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed, navigator: navigator) { kind, counts in
                 if counts { stats.record(kind) }
             }
+            .overlay(alignment: .top) {
+                if navigator.isLoading {
+                    ProgressView()
+                        .padding(10)
+                        .background(.regularMaterial, in: Circle())
+                        .padding(.top, 12)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: navigator.isLoading)
             Divider()
             TabBar(navigator: navigator, showHome: !settings.blockFeed)
         }

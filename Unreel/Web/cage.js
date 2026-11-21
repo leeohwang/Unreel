@@ -75,19 +75,38 @@
     if (!styleEl || !styleEl.isConnected) applyStyle();
   }, 400);
 
-  // Opens the signed-in user's own profile. Instagram's site has no "/me" URL,
-  // so ask the same endpoint the site itself uses for the current username.
+  // Opens the signed-in user's own profile. Instagram's site has no "/me" URL.
+  // (Its current_user API answers 400 "spam" to scripted calls, so don't use it.)
+  // The page embeds the viewer's data: the "username" nearest the viewer's id
+  // (the ds_user_id cookie) is theirs. Fall back to Instagram's own profile link,
+  // then to Edit profile, which at least shows the account.
+  function ownUsername() {
+    var uid = (document.cookie.match(/(?:^|;\s*)ds_user_id=(\d+)/) || [])[1];
+    var html = document.documentElement.innerHTML;
+    if (uid) {
+      var ids = [], m, re = new RegExp('"id":"' + uid + '"', 'g');
+      while ((m = re.exec(html))) ids.push(m.index);
+      var best = null, bestDist = 2000, ure = /"username":"([A-Za-z0-9._]{1,30})"/g;
+      while ((m = ure.exec(html))) {
+        for (var i = 0; i < ids.length; i++) {
+          var d = Math.abs(ids[i] - m.index);
+          if (d < bestDist) { bestDist = d; best = m[1]; }
+        }
+      }
+      if (best) return best;
+    }
+    var imgs = document.querySelectorAll('a[href] img[alt]');
+    for (var j = 0; j < imgs.length; j++) {
+      var href = imgs[j].closest('a').getAttribute('href') || '';
+      if (/profile picture/i.test(imgs[j].alt) && /^\/[A-Za-z0-9._]+\/$/.test(href)) return href.slice(1, -1);
+    }
+    return null;
+  }
+
   function goProfile() {
-    fetch('/api/v1/accounts/current_user/?edit=true', {
-      credentials: 'include',
-      headers: { 'X-IG-App-ID': cfg.igAppID || '936619743392459', 'X-Requested-With': 'XMLHttpRequest' }
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        var name = j && j.user && j.user.username;
-        location.assign(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
-      })
-      .catch(function () { location.assign('/accounts/edit/'); });
+    var name = null;
+    try { name = ownUsername(); } catch (e) {}
+    location.assign(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
   }
 
   window.__unreel = {
