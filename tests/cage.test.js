@@ -72,9 +72,11 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/direct/inbox/')), 'spa', 'uses an existing link');
   await settle(page);
   assert.strictEqual(pathOf(page), '/direct/inbox/', 'link navigation lands');
-  assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/accounts/activity/')), 'load', 'falls back to a load');
-  await settle(page);
+  await page.evaluate(() => { window.__navTest = 1; });
+  assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/accounts/activity/')), 'spa-pop', 'no link: tries in-page routing');
+  await page.waitForTimeout(3600); // fake page has no router, so it must fall back to a real load
   assert.strictEqual(pathOf(page), '/accounts/activity/', 'fallback load lands');
+  assert.ok(await page.evaluate(() => !window.__navTest), 'page actually reloaded');
 
   page = await makePage(browser, false);
   await page.goto('https://www.instagram.com/');

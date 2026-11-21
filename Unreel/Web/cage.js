@@ -134,8 +134,24 @@
     if (location.pathname === path) return 'same';
     var link = document.querySelector('a[href="' + path.replace(/"/g, '') + '"]');
     if (link) { link.click(); return 'spa'; }
-    location.assign(path);
-    return 'load';
+    // No link on this page (e.g. the DM inbox). Instagram's router listens
+    // for popstate, so push the URL and let it render in-page instead of
+    // paying a ~10s full reload. If nothing re-renders, do a real load.
+    try {
+      history.pushState({}, '', path);
+      var changed = false;
+      var mo = new MutationObserver(function () { changed = true; mo.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+      dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+      setTimeout(function () {
+        mo.disconnect();
+        if (!changed) location.assign(path);
+      }, 3000);
+      return 'spa-pop';
+    } catch (e) {
+      location.assign(path);
+      return 'load';
+    }
   }
 
   function goProfile() {

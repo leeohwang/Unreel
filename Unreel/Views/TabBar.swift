@@ -26,7 +26,7 @@ struct TabBar: View {
             Tab(id: "search", title: "Search", icon: "magnifyingglass", path: "/explore/search/",
                 matches: { $0.hasPrefix("/explore") }),
             Tab(id: "activity", title: "Activity", icon: "heart", path: "/accounts/activity/",
-                matches: { $0.hasPrefix("/accounts/activity") }),
+                matches: { $0.hasPrefix("/accounts/activity") || $0.hasPrefix("/notifications") }),
             Tab(id: "profile", title: "Profile", icon: "person.crop.circle", path: nil, matches: { _ in false }),
         ]
         return list
