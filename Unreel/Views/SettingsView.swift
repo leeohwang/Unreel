@@ -6,12 +6,21 @@ struct SettingsView: View {
     @EnvironmentObject private var rulesStore: RulesStore
     @Environment(\.dismiss) private var dismiss
     @State private var confirmLogout = false
+    @State private var showStats = false
 
     private let limitOptions = [0, 10, 15, 20, 30, 45, 60, 90]
 
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    Button { showStats = true } label: {
+                        Label("Your stats", systemImage: "chart.bar")
+                    }
+                } footer: {
+                    Text("How many Reels you skipped and the time you saved. Stored only on this iPhone.")
+                }
+
                 Section {
                     Toggle("Block home feed", isOn: $settings.blockFeed)
                 } header: {
@@ -49,6 +58,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showStats) { StatsView() }
             .toolbar { Button("Done") { dismiss() } }
             .confirmationDialog("Log out and clear website data?", isPresented: $confirmLogout, titleVisibility: .visible) {
                 Button("Log out", role: .destructive) { logout() }

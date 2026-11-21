@@ -42,19 +42,16 @@ struct TabBar: View {
                     navigator.lastTappedTab = tab.id
                     if let path = tab.path { navigator.go(path) } else { navigator.goProfile() }
                 } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: selected && tab.id != "search" ? tab.icon + ".fill" : tab.icon)
-                            .font(.system(size: 20))
-                        Text(tab.title).font(.caption2)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .foregroundStyle(selected ? Color.primary : Color.secondary)
+                    // Icons only, like Instagram's own bar.
+                    Image(systemName: selected && tab.id != "search" ? tab.icon + ".fill" : tab.icon)
+                        .font(.system(size: 24, weight: selected ? .semibold : .regular))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                    .foregroundStyle(Color.primary)
                 }
                 .accessibilityLabel(tab.title)
             }
         }
-        .padding(.top, 6)
-        .padding(.bottom, 2)
-        .background(.bar)
+        .padding(.top, 2)
+        .background(Color(uiColor: .systemBackground))
     }
 }

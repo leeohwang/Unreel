@@ -8,7 +8,6 @@ struct RootView: View {
 
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @StateObject private var navigator = WebNavigator()
-    @State private var showStats = false
     @State private var showSettings = false
     @State private var extendedUntil: Date?
     @State private var now = Date()
@@ -30,12 +29,16 @@ struct RootView: View {
                 if counts { stats.record(kind) }
             }
             .overlay(alignment: .top) {
+                // A thin progress line, like Instagram's own, instead of a spinner.
                 if navigator.isLoading {
-                    ProgressView()
-                        .padding(10)
-                        .background(.regularMaterial, in: Circle())
-                        .padding(.top, 12)
-                        .transition(.opacity)
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.primary.opacity(0.35))
+                            .frame(width: geo.size.width * max(0.05, navigator.progress), height: 2)
+                            .animation(.linear(duration: 0.2), value: navigator.progress)
+                    }
+                    .frame(height: 2)
+                    .transition(.opacity)
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: navigator.isLoading)
@@ -64,25 +67,19 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { stats.save() }
         }
-        .sheet(isPresented: $showStats) { StatsView() }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .fullScreenCover(isPresented: Binding(get: { !hasSeenWelcome }, set: { hasSeenWelcome = !$0 })) {
             WelcomeView { hasSeenWelcome = true }
         }
     }
 
+    /// Laid out like Instagram's header: name on the left, icons on the right.
     private var topBar: some View {
-        HStack {
-            Button { showStats = true } label: {
-                Label {
-                    Text("\(stats.today.totalBlocked) blocked today")
-                        .font(.subheadline.weight(.semibold))
-                        .monospacedDigit()
-                } icon: {
-                    Image(systemName: "hand.raised.fill")
-                }
-            }
-            .accessibilityHint("Shows your stats")
+        HStack(spacing: 22) {
+            Text("Unreel")
+                .font(.system(size: 26, weight: .semibold, design: .serif))
+                .italic()
+                .foregroundStyle(.primary)
             Spacer()
             if settings.dailyLimitMinutes > 0 {
                 Text(remainingText)
@@ -97,18 +94,18 @@ struct RootView: View {
                 navigator.go("/accounts/activity/")
             } label: {
                 Image(systemName: isOnActivity ? "heart.fill" : "heart")
-                    .imageScale(.large)
+                    .font(.system(size: 22))
             }
             .accessibilityLabel("Activity")
-            .padding(.trailing, 8)
             Button { showSettings = true } label: {
-                Image(systemName: "gearshape")
-                    .imageScale(.large)
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 22))
             }
             .accessibilityLabel("Settings")
         }
+        .foregroundStyle(.primary)
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .frame(height: 44)
     }
 
     private var isOnActivity: Bool {

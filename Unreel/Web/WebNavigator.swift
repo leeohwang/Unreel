@@ -6,6 +6,7 @@ import WebKit
 final class WebNavigator: ObservableObject {
     @Published private(set) var currentPath = "/"
     @Published private(set) var isLoading = false
+    @Published private(set) var progress: Double = 0
     /// Whether Instagram's own bottom tab bar is on screen (reported by cage.js).
     /// The app shows its own tab bar only when it isn't, e.g. in DMs.
     @Published var igBarVisible = false
@@ -14,6 +15,7 @@ final class WebNavigator: ObservableObject {
     private weak var webView: WKWebView?
     private var urlObservation: NSKeyValueObservation?
     private var loadingObservation: NSKeyValueObservation?
+    private var progressObservation: NSKeyValueObservation?
 
     func attach(_ webView: WKWebView) {
         self.webView = webView
@@ -25,6 +27,10 @@ final class WebNavigator: ObservableObject {
         loadingObservation = webView.observe(\.isLoading, options: [.initial, .new]) { [weak self] webView, _ in
             let loading = webView.isLoading
             Task { @MainActor in self?.isLoading = loading }
+        }
+        progressObservation = webView.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
+            let value = webView.estimatedProgress
+            Task { @MainActor in self?.progress = value }
         }
     }
 
