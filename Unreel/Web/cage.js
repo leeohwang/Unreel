@@ -29,7 +29,28 @@
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
-    return sels.length ? sels.join(',\n') + ' { display: none !important; }' : '';
+    sels.push('[data-unreel-hidden]');
+    return sels.join(',\n') + ' { display: none !important; }';
+  }
+
+  // Instagram's own bottom tab bar has no role or stable class to select, so
+  // find it from a link it contains: the nearest position:fixed ancestor that
+  // is a short strip along the bottom of the screen. The app shows its own tab
+  // bar instead. Size checks keep this from ever hiding a whole page or dialog.
+  function hideFixedBars() {
+    var sels = cfg.hideFixedBarsWith || [];
+    if (!sels.length || !document.body) return;
+    var links = document.querySelectorAll(sels.join(','));
+    for (var i = 0; i < links.length; i++) {
+      for (var el = links[i].parentElement; el && el !== document.body; el = el.parentElement) {
+        if (getComputedStyle(el).position !== 'fixed') continue;
+        var r = el.getBoundingClientRect();
+        if (r.height > 0 && r.height <= 120 && r.bottom >= innerHeight - 4) {
+          el.setAttribute('data-unreel-hidden', '');
+        }
+        break;
+      }
+    }
   }
 
   function applyStyle() {
@@ -73,6 +94,7 @@
   setInterval(function () {
     check();
     if (!styleEl || !styleEl.isConnected) applyStyle();
+    hideFixedBars();
   }, 400);
 
   // Opens the signed-in user's own profile. Instagram's site has no "/me" URL.

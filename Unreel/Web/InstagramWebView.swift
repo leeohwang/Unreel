@@ -82,11 +82,12 @@ struct InstagramWebView: UIViewRepresentable {
                 let blockedPaths: [PathRule]
                 let hideSelectors: [String]
                 let feedSelectors: [String]
+                let hideFixedBarsWith: [String]
             }
             let r = parent.rules
             let page = PageConfig(redirectPath: r.redirectPath, blockFeed: parent.blockFeed,
                                   blockedPaths: r.blockedPaths, hideSelectors: r.hideSelectors,
-                                  feedSelectors: r.feedSelectors)
+                                  feedSelectors: r.feedSelectors, hideFixedBarsWith: r.hideFixedBarsWith ?? [])
             let data = (try? JSONEncoder().encode(page)) ?? Data("{}".utf8)
             return String(decoding: data, as: UTF8.self)
         }

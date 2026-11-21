@@ -10,7 +10,9 @@ const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/rules.j
 const page_html = `<!doctype html><html><head></head><body>
   <a id="home" href="/">Home</a><a id="reels" href="/reels/">Reels</a><a id="explore" href="/explore/">Search</a>
   <a id="tab" href="/someone/reels/">Profile reels</a><a id="clip" href="/someone/reel/abc/">clip</a>
-  <a id="dm" href="/direct/inbox/">DMs</a></body></html>`;
+  <a id="dm" href="/direct/inbox/">DMs</a>
+  <div id="igbar" style="position:fixed;bottom:0;left:0;right:0;height:50px"><div><a href="/explore/">S</a></div></div>
+  <div id="dialog" style="position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none"><a href="/direct/inbox/">x</a></div></body></html>`;
 
 async function makePage(browser, blockFeed, slowPath) {
   const page = await browser.newPage();
@@ -21,7 +23,8 @@ async function makePage(browser, blockFeed, slowPath) {
     await r.fulfill({ contentType: 'text/html', body: page_html });
   });
   const cfg = { redirectPath: rules.redirectPath, blockFeed, blockedPaths: rules.blockedPaths,
-                hideSelectors: rules.hideSelectors, feedSelectors: rules.feedSelectors };
+                hideSelectors: rules.hideSelectors, feedSelectors: rules.feedSelectors,
+                hideFixedBarsWith: rules.hideFixedBarsWith };
   await page.addInitScript(`window.webkit = { messageHandlers: { unreel: { postMessage: m => window.__record(m) } } };
     window.__unreelConfig = ${JSON.stringify(cfg)};\n${cage}`);
   return page;
@@ -63,6 +66,8 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   }
   for (const id of ['reels', 'tab', 'clip', 'home']) assert.ok(await hidden(page, id), id + ' hidden');
   for (const id of ['dm', 'explore']) assert.ok(!(await hidden(page, id)), id + ' visible');
+  assert.ok(await hidden(page, 'igbar'), "Instagram's bottom bar hidden");
+  assert.ok(!(await hidden(page, 'dialog')), 'full-screen fixed layer not hidden');
 
   page = await makePage(browser, false);
   await page.goto('https://www.instagram.com/');

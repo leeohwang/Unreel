@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -16,5 +16,9 @@
   ],
   "feedSelectors": [
     "a[href=\"/\"]"
+  ],
+  "hideFixedBarsWith": [
+    "a[href=\"/explore/\"]",
+    "a[href=\"/direct/inbox/\"]"
   ]
 }

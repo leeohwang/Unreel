@@ -16,6 +16,9 @@ struct Rules: Codable, Equatable {
     var blockedPaths: [PathRule]
     var hideSelectors: [String]
     var feedSelectors: [String]
+    /// Links inside Instagram's own bottom tab bar; cage.js hides the fixed bar holding them.
+    /// Optional so older rules files still decode.
+    var hideFixedBarsWith: [String]?
 
     /// The first rule that blocks this path, honoring the feed setting.
     func match(path: String, blockFeed: Bool) -> PathRule? {
