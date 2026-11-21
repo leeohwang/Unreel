@@ -6,7 +6,6 @@ struct SettingsView: View {
     @EnvironmentObject private var rulesStore: RulesStore
     @Environment(\.dismiss) private var dismiss
     @State private var confirmLogout = false
-    @State private var showStats = false
 
     private let limitOptions = [0, 10, 15, 20, 30, 45, 60, 90]
 
@@ -14,7 +13,9 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    Button { showStats = true } label: {
+                    NavigationLink {
+                        StatsView(embedded: true)
+                    } label: {
                         Label("Your stats", systemImage: "chart.bar")
                     }
                 } footer: {
@@ -58,7 +59,6 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .sheet(isPresented: $showStats) { StatsView() }
             .toolbar { Button("Done") { dismiss() } }
             .confirmationDialog("Log out and clear website data?", isPresented: $confirmLogout, titleVisibility: .visible) {
                 Button("Log out", role: .destructive) { logout() }
