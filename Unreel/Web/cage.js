@@ -30,7 +30,34 @@
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
     sels.push('[data-unreel-hidden]');
+    sels = sels.concat(learnedBars());
     return sels.join(',\n') + ' { display: none !important; }';
+  }
+
+  // Selectors for Instagram's bottom bar learned on earlier pages and loads, so
+  // CSS hides it before it is ever drawn instead of after we spot it.
+  var LEARNED_KEY = 'unreel.barSelectors';
+  function learnedBars() {
+    try {
+      var list = JSON.parse(localStorage.getItem(LEARNED_KEY) || '[]');
+      return Array.isArray(list) ? list.filter(function (x) { return typeof x === 'string'; }) : [];
+    } catch (e) { return []; }
+  }
+  // Instagram's class names are atomic utility classes, so the bar's full class
+  // list plus ":has(<one of its links>)" pins it down without catching
+  // anything else.
+  function learnBar(el, linkSelectors) {
+    var classes = (el.getAttribute('class') || '').split(/\s+/).filter(function (c) {
+      return /^[A-Za-z_][\w-]*$/.test(c);
+    });
+    if (!classes.length) return;
+    var sel = el.tagName.toLowerCase() + '.' + classes.join('.') + ':has(' + linkSelectors.join(',') + ')';
+    try { if (!document.querySelector(sel)) return; } catch (e) { return; } // unsupported or wrong
+    var list = learnedBars();
+    if (list.indexOf(sel) !== -1) return;
+    list.unshift(sel);
+    try { localStorage.setItem(LEARNED_KEY, JSON.stringify(list.slice(0, 6))); } catch (e) { return; }
+    applyStyle();
   }
 
   // Instagram's own bottom tab bar has no role or stable class to select, so
@@ -43,11 +70,13 @@
     var links = document.querySelectorAll(sels.join(','));
     for (var i = 0; i < links.length; i++) {
       if (links[i].closest('[data-unreel-hidden]')) continue; // already hidden
+      if (!links[i].getClientRects().length) continue;         // not drawn (e.g. hidden by learned CSS)
       for (var el = links[i].parentElement; el && el !== document.body; el = el.parentElement) {
         if (getComputedStyle(el).position !== 'fixed') continue;
         var r = el.getBoundingClientRect();
         if (r.height > 0 && r.height <= 120 && r.bottom >= innerHeight - 4) {
           el.setAttribute('data-unreel-hidden', '');
+          learnBar(el, sels);
         }
         break;
       }
@@ -92,6 +121,14 @@
   });
   window.addEventListener('popstate', check);
   document.addEventListener('DOMContentLoaded', applyStyle);
+  // Hide Instagram's bar as soon as it is added to the page. Observer callbacks
+  // run before the browser paints, so it is never seen.
+  var observer = new MutationObserver(function () {
+    if (!styleEl || !styleEl.isConnected) applyStyle();
+    hideFixedBars();
+  });
+  observer.observe(document, { childList: true, subtree: true });
+
   setInterval(function () {
     check();
     if (!styleEl || !styleEl.isConnected) applyStyle();

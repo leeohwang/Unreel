@@ -11,7 +11,7 @@ const page_html = `<!doctype html><html><head></head><body>
   <a id="home" href="/">Home</a><a id="reels" href="/reels/">Reels</a><a id="explore" href="/explore/">Search</a>
   <a id="tab" href="/someone/reels/">Profile reels</a><a id="clip" href="/someone/reel/abc/">clip</a>
   <a id="dm" href="/direct/inbox/">DMs</a>
-  <div id="igbar" style="position:fixed;bottom:0;left:0;right:0;height:50px"><div><a href="/explore/">S</a></div></div>
+  <div id="igbar" class="x1 x2-bar" style="position:fixed;bottom:0;left:0;right:0;height:50px"><div><a href="/explore/">S</a></div></div>
   <div id="dialog" style="position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none"><a href="/direct/inbox/">x</a></div></body></html>`;
 
 async function makePage(browser, blockFeed, slowPath) {
@@ -67,6 +67,20 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   for (const id of ['reels', 'tab', 'clip', 'home']) assert.ok(await hidden(page, id), id + ' hidden');
   for (const id of ['dm', 'explore']) assert.ok(!(await hidden(page, id)), id + ' visible');
   assert.ok(await hidden(page, 'igbar'), "Instagram's bottom bar hidden");
+  const learned = await page.evaluate(() => JSON.parse(localStorage.getItem('unreel.barSelectors') || '[]'));
+  assert.ok(learned.length === 1 && learned[0].startsWith('div.x1.x2-bar:has('), 'bar selector learned: ' + learned);
+  await page.reload();
+  assert.ok(await hidden(page, 'igbar'), 'bar hidden by learned CSS after reload');
+  assert.ok(!(await page.$eval('#igbar', el => el.hasAttribute('data-unreel-hidden'))), 'hidden by CSS, not by the late check');
+  // A bar Instagram re-renders later is hidden by the observer before the next paint.
+  const seenAfterInsert = await page.evaluate(() => new Promise(res => {
+    const b = document.createElement('div');
+    b.className = 'fresh'; b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:50px';
+    b.innerHTML = '<a href="/direct/inbox/">m</a>';
+    document.body.appendChild(b);
+    requestAnimationFrame(() => res(getComputedStyle(b).display !== 'none'));
+  }));
+  assert.ok(!seenAfterInsert, 'new bar hidden before the next frame');
   assert.ok(!(await hidden(page, 'dialog')), 'full-screen fixed layer not hidden');
 
   assert.strictEqual(await page.evaluate(() => window.__unreel.navigate('/direct/inbox/')), 'spa', 'uses an existing link');
