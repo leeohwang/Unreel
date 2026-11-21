@@ -193,6 +193,16 @@
       // Instagram fills posts in after creating them, so only mark once loaded.
       if (spans.length > 3) post_.setAttribute('data-unreel-checked', '');
     }
+    // The "Suggested for you" accounts block: a heading in a wrapper, inside the
+    // block (block > div > h4). It has no stable attributes, only the heading text.
+    var heads = document.querySelectorAll('main h4');
+    for (var k = 0; k < heads.length; k++) {
+      if (markers.indexOf(heads[k].textContent.trim()) === -1) continue;
+      var block = heads[k].parentElement && heads[k].parentElement.parentElement;
+      if (block && block.tagName !== 'MAIN' && !block.querySelector('article')) {
+        block.style.setProperty('display', 'none', 'important');
+      }
+    }
   }
 
   ['pushState', 'replaceState'].forEach(function (name) {

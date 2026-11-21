@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -45,7 +45,7 @@
     "a[href=\"/explore/\"]",
     "a[href=\"/direct/inbox/\"]"
   ],
-  "extraCSS": "html[data-unreel-path^=\"/direct/\"] [role=\"navigation\"] > div { border-right-width: 0 !important; }\nhtml[data-unreel-path=\"/direct/inbox/\"] [role=\"navigation\"] [role=\"button\"]:has(svg:is([aria-label=\"Back\"],[aria-label=\"Atrás\"],[aria-label=\"Retour\"],[aria-label=\"Zurück\"],[aria-label=\"뒤로\"])) { visibility: hidden !important; pointer-events: none !important; }",
+  "extraCSS": "html[data-unreel-path^=\"/direct/\"] [role=\"navigation\"] > div { border-right-width: 0 !important; }\nhtml[data-unreel-path=\"/direct/inbox/\"] [role=\"navigation\"] [role=\"button\"]:has(svg:is([aria-label=\"Back\"],[aria-label=\"Atrás\"],[aria-label=\"Retour\"],[aria-label=\"Zurück\"],[aria-label=\"뒤로\"])) { visibility: hidden !important; pointer-events: none !important; }\nhtml[data-unreel-path=\"/\"] :is(header._ab15, header:has(svg[aria-label=\"Instagram\"])) { opacity: 0 !important; pointer-events: none !important; }\nhtml[data-unreel-path=\"/\"] nav:has(> div > :is(header._ab15, header:has(svg[aria-label=\"Instagram\"]))), html[data-unreel-path=\"/\"] nav:has(> div > :is(header._ab15, header:has(svg[aria-label=\"Instagram\"]))) > div { height: 0 !important; min-height: 0 !important; margin-top: 0 !important; overflow: visible !important; }",
   "reelLinkSelectors": [
     "a[href*=\"/reel/\"]"
   ],

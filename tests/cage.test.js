@@ -14,6 +14,7 @@ const page_html = `<!doctype html><html><head></head><body>
   <article id="p-normal"><span>a</span><span>b</span><span>c</span><span>friend's photo</span></article>
   <article id="p-reel"><a href="/reel/qqq/">r</a></article>
   <article id="p-sugg"><span>x</span><span>y</span><span>z</span><span>Suggested for you</span></article>
+  <main><div id="sugg-block"><div><h4>Suggested for you</h4></div><div><button>Follow</button></div></div></main>
   <div id="igbar" class="x1 x2-bar" style="position:fixed;bottom:0;left:0;right:0;height:50px"><div><a href="/explore/">S</a></div></div>
   <div id="dialog" style="position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none"><a href="/direct/inbox/">x</a></div></body></html>`;
 
@@ -164,6 +165,7 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   assert.ok(!(await hidden(page, 'p-normal')), "friend's post visible");
   assert.ok(await hidden(page, 'p-reel'), 'Reel post hidden');
   assert.ok(await hidden(page, 'p-sugg'), 'suggested post hidden');
+  assert.ok(await hidden(page, 'sugg-block'), 'suggested accounts block hidden');
 
   // Redirect loop protection.
   page = await makePage(browser, true);
