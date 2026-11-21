@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Native tab row. Instagram's mobile site hides its own tab bar on the
+/// Native tab row, mirroring Instagram's own bar (minus Reels). Activity is
+/// the heart in the header, as in Instagram. Instagram's mobile site hides its own tab bar on the
 /// messages page, and its back arrow leads to the (blocked) feed, so without
 /// this there is no way out of DMs.
 struct TabBar: View {
@@ -25,8 +26,6 @@ struct TabBar: View {
                 matches: { $0.hasPrefix("/direct") }),
             Tab(id: "search", title: "Search", icon: "magnifyingglass", path: "/explore/search/",
                 matches: { $0.hasPrefix("/explore") }),
-            Tab(id: "activity", title: "Activity", icon: "heart", path: "/accounts/activity/",
-                matches: { $0.hasPrefix("/accounts/activity") || $0.hasPrefix("/notifications") }),
             Tab(id: "profile", title: "Profile", icon: "person.crop.circle", path: nil, matches: { _ in false }),
         ]
         return list
