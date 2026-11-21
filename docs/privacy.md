@@ -20,6 +20,6 @@ Unreel is a free app that shows the Instagram website with Reels and Explore blo
 
 **Children.** Unreel is not directed at children under 13. Instagram's own age requirements apply.
 
-**Contact.** Questions or problems: open an issue at https://github.com/leeohwang/unreel/issues
+**Contact.** Questions or problems: open an issue at https://github.com/leeohwang/Unreel/issues
 
 Unreel is not affiliated with, endorsed by, or sponsored by Instagram or Meta.

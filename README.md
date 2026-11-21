@@ -25,7 +25,7 @@ A free iPhone app that opens Instagram **without Reels, Explore or the endless f
 ### Before shipping
 
 - `Unreel/App/Config.swift`: paste your TelemetryDeck app ID (create a free app at dashboard.telemetrydeck.com). Leave it empty to ship without analytics.
-- The remote rules and privacy policy URLs must be public. Easiest: make this repo public and turn on GitHub Pages (Settings > Pages > Deploy from branch `main`, folder `/docs`). Then `docs/privacy.md` is served at `https://leeohwang.github.io/unreel/privacy`.
+- The remote rules and privacy policy URLs must be public. Easiest: make this repo public and turn on GitHub Pages (Settings > Pages > Deploy from branch `main`, folder `/docs`). Then `docs/privacy.md` is served at `https://leeohwang.github.io/Unreel/privacy`.
 - Replace the placeholder icon in `Unreel/Assets.xcassets/AppIcon.appiconset/` if you want. Keep it clearly different from Instagram's.
 
 See [docs/APP_STORE.md](docs/APP_STORE.md) for the listing text, privacy label answers, review notes and a release checklist.
