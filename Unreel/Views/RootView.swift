@@ -39,8 +39,13 @@ struct RootView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: navigator.isLoading)
-            Divider()
-            TabBar(navigator: navigator, showHome: !settings.blockFeed)
+            // Instagram's own bottom bar (with Reels removed) is the main navigation.
+            // On pages where Instagram leaves it out (the DM inbox and chats),
+            // show ours so there is always a way out.
+            if !navigator.igBarVisible {
+                Divider()
+                TabBar(navigator: navigator, showHome: !settings.blockFeed)
+            }
         }
         .overlay {
             if limitReached {

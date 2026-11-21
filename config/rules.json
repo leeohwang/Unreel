@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -12,12 +12,14 @@
   "hideSelectors": [
     "a[href=\"/reels/\"]",
     "a[href$=\"/reels/\"]",
-    "a[href*=\"/reel/\"]"
+    "a[href*=\"/reel/\"]",
+    "[data-visualcompletion=\"ignore-dynamic\"] > div:has(a[href=\"/reels/\"])"
   ],
   "feedSelectors": [
-    "a[href=\"/\"]"
+    "a[href=\"/\"]",
+    "[data-visualcompletion=\"ignore-dynamic\"] > div:has(a[href=\"/\"])"
   ],
-  "hideFixedBarsWith": [
+  "igBarLinks": [
     "a[href=\"/explore/\"]",
     "a[href=\"/direct/inbox/\"]"
   ]

@@ -82,12 +82,12 @@ struct InstagramWebView: UIViewRepresentable {
                 let blockedPaths: [PathRule]
                 let hideSelectors: [String]
                 let feedSelectors: [String]
-                let hideFixedBarsWith: [String]
+                let igBarLinks: [String]
             }
             let r = parent.rules
             let page = PageConfig(redirectPath: r.redirectPath, blockFeed: parent.blockFeed,
                                   blockedPaths: r.blockedPaths, hideSelectors: r.hideSelectors,
-                                  feedSelectors: r.feedSelectors, hideFixedBarsWith: r.hideFixedBarsWith ?? [])
+                                  feedSelectors: r.feedSelectors, igBarLinks: r.igBarLinks ?? [])
             let data = (try? JSONEncoder().encode(page)) ?? Data("{}".utf8)
             return String(decoding: data, as: UTF8.self)
         }
@@ -115,10 +115,16 @@ struct InstagramWebView: UIViewRepresentable {
         // MARK: Messages from cage.js (in-page navigations)
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard let body = message.body as? [String: Any],
-                  body["type"] as? String == "blocked",
-                  let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
-            parent.onBlocked(kind, body["count"] as? Bool ?? true)
+            guard let body = message.body as? [String: Any] else { return }
+            switch body["type"] as? String {
+            case "blocked":
+                guard let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
+                parent.onBlocked(kind, body["count"] as? Bool ?? true)
+            case "igBar":
+                parent.navigator.igBarVisible = body["visible"] as? Bool ?? false
+            default:
+                break
+            }
         }
 
         // MARK: Full page navigations

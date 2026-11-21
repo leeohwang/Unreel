@@ -29,59 +29,66 @@
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
-    sels.push('[data-unreel-hidden]');
-    sels = sels.concat(learnedBars());
     return sels.join(',\n') + ' { display: none !important; }';
   }
 
-  // Selectors for Instagram's bottom bar learned on earlier pages and loads, so
-  // CSS hides it before it is ever drawn instead of after we spot it.
-  var LEARNED_KEY = 'unreel.barSelectors';
-  function learnedBars() {
-    try {
-      var list = JSON.parse(localStorage.getItem(LEARNED_KEY) || '[]');
-      return Array.isArray(list) ? list.filter(function (x) { return typeof x === 'string'; }) : [];
-    } catch (e) { return []; }
-  }
-  // Instagram's class names are atomic utility classes, so the bar's full class
-  // list plus ":has(<one of its links>)" pins it down without catching
-  // anything else.
-  function learnBar(el, linkSelectors) {
-    var classes = (el.getAttribute('class') || '').split(/\s+/).filter(function (c) {
-      return /^[A-Za-z_][\w-]*$/.test(c);
-    });
-    if (!classes.length) return;
-    var sel = el.tagName.toLowerCase() + '.' + classes.join('.') + ':has(' + linkSelectors.join(',') + ')';
-    try { if (!document.querySelector(sel)) return; } catch (e) { return; } // unsupported or wrong
-    var list = learnedBars();
-    if (list.indexOf(sel) !== -1) return;
-    list.unshift(sel);
-    try { localStorage.setItem(LEARNED_KEY, JSON.stringify(list.slice(0, 6))); } catch (e) { return; }
-    applyStyle();
-  }
+  // Earlier builds learned a CSS rule that hid Instagram's bottom bar. The bar
+  // is used again now (minus Reels, which hideSelectors removes), so drop it.
+  try { localStorage.removeItem('unreel.barSelectors'); } catch (e) {}
 
-  // Instagram's own bottom tab bar has no role or stable class to select, so
-  // find it from a link it contains: the nearest position:fixed ancestor that
-  // is a short strip along the bottom of the screen. The app shows its own tab
-  // bar instead. Size checks keep this from ever hiding a whole page or dialog.
-  function hideFixedBars() {
-    var sels = cfg.hideFixedBarsWith || [];
-    if (!sels.length || !document.body) return;
+  // Is Instagram's own bottom tab bar on screen? It has no role or stable class,
+  // so look for a link it contains whose nearest position:fixed ancestor is a
+  // short strip along the bottom. Instagram leaves the bar out on some pages
+  // (the DM inbox and chats); the app shows its own tab bar there instead, so
+  // nobody gets stuck.
+  function igBarOnScreen() {
+    var sels = cfg.igBarLinks || [];
+    if (!sels.length || !document.body) return false;
     var links = document.querySelectorAll(sels.join(','));
     for (var i = 0; i < links.length; i++) {
-      if (links[i].closest('[data-unreel-hidden]')) continue; // already hidden
-      if (!links[i].getClientRects().length) continue;         // not drawn (e.g. hidden by learned CSS)
+      if (!links[i].getClientRects().length) continue; // not drawn
       for (var el = links[i].parentElement; el && el !== document.body; el = el.parentElement) {
         if (getComputedStyle(el).position !== 'fixed') continue;
         var r = el.getBoundingClientRect();
-        if (r.height > 0 && r.height <= 120 && r.bottom >= innerHeight - 4) {
-          el.setAttribute('data-unreel-hidden', '');
-          learnBar(el, sels);
-        }
+        if (r.height > 0 && r.height <= 120 && r.bottom >= innerHeight - 4) return true;
         break;
       }
     }
+    return false;
   }
+
+  // Tell the app when the bar comes and goes. "Shown" is reported at once so the
+  // app's bar steps aside immediately; "gone" only after it stays gone a moment,
+  // so Instagram re-rendering the bar between pages doesn't make the app's bar
+  // blink in and out.
+  var igBarReported = null, igBarGoneTimer = null, igBarQueued = false;
+  function reportIgBar() {
+    igBarQueued = false;
+    if (igBarOnScreen()) {
+      clearTimeout(igBarGoneTimer); igBarGoneTimer = null;
+      if (igBarReported !== true) { igBarReported = true; post({ type: 'igBar', visible: true }); }
+    } else if (igBarReported !== false && !igBarGoneTimer) {
+      igBarGoneTimer = setTimeout(function () {
+        igBarGoneTimer = null;
+        if (!igBarOnScreen()) { igBarReported = false; post({ type: 'igBar', visible: false }); }
+      }, 600);
+    }
+  }
+  function queueIgBar() {
+    if (igBarQueued) return;
+    igBarQueued = true;
+    requestAnimationFrame(reportIgBar);
+  }
+
+  // Instagram's Search button points at /explore/, which is blocked (it would
+  // redirect to search with a full reload). Go straight to search in-page.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href="/explore/"]');
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    navigate('/explore/search/');
+  }, true);
 
   function applyStyle() {
     if (!styleEl) {
@@ -121,18 +128,16 @@
   });
   window.addEventListener('popstate', check);
   document.addEventListener('DOMContentLoaded', applyStyle);
-  // Hide Instagram's bar as soon as it is added to the page. Observer callbacks
-  // run before the browser paints, so it is never seen.
   var observer = new MutationObserver(function () {
     if (!styleEl || !styleEl.isConnected) applyStyle();
-    hideFixedBars();
+    queueIgBar();
   });
   observer.observe(document, { childList: true, subtree: true });
 
   setInterval(function () {
     check();
     if (!styleEl || !styleEl.isConnected) applyStyle();
-    hideFixedBars();
+    queueIgBar();
   }, 400);
 
   // Opens the signed-in user's own profile. Instagram's site has no "/me" URL.
