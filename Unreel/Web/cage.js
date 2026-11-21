@@ -9,6 +9,10 @@
   var rules = [];
   var styleEl = null;
   var lastPath = null;
+  // Set once we start leaving a blocked page. location.replace() is not instant
+  // (seconds on a slow device), and without this the 400 ms timer would fire
+  // replace() again and again: overcounting blocks and restarting the load.
+  var redirecting = false;
 
   function post(msg) {
     try { window.webkit.messageHandlers.unreel.postMessage(msg); } catch (e) {}
@@ -39,6 +43,7 @@
   }
 
   function check() {
+    if (redirecting) return;
     var path = location.pathname;
     if (path === lastPath) return;
     lastPath = path;
@@ -48,8 +53,8 @@
       var r = rules[i].rule;
       var target = r.redirect || fallback;
       if (target === path) return; // never loop
+      redirecting = true;
       post({ type: 'blocked', kind: r.kind, count: r.count !== false });
-      lastPath = null;
       location.replace(target);
       return;
     }
@@ -70,6 +75,21 @@
     if (!styleEl || !styleEl.isConnected) applyStyle();
   }, 400);
 
+  // Opens the signed-in user's own profile. Instagram's site has no "/me" URL,
+  // so ask the same endpoint the site itself uses for the current username.
+  function goProfile() {
+    fetch('/api/v1/accounts/current_user/?edit=true', {
+      credentials: 'include',
+      headers: { 'X-IG-App-ID': cfg.igAppID || '936619743392459', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var name = j && j.user && j.user.username;
+        location.assign(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
+      })
+      .catch(function () { location.assign('/accounts/edit/'); });
+  }
+
   window.__unreel = {
     configure: function (next) {
       cfg = next || {};
@@ -77,7 +97,8 @@
       applyStyle();
       lastPath = null;
       check();
-    }
+    },
+    goProfile: goProfile
   };
 
   compile();

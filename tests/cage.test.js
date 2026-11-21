@@ -12,11 +12,14 @@ const page_html = `<!doctype html><html><head></head><body>
   <a id="tab" href="/someone/reels/">Profile reels</a><a id="clip" href="/someone/reel/abc/">clip</a>
   <a id="dm" href="/direct/inbox/">DMs</a></body></html>`;
 
-async function makePage(browser, blockFeed) {
+async function makePage(browser, blockFeed, slowPath) {
   const page = await browser.newPage();
   page.msgs = [];
   await page.exposeFunction('__record', m => page.msgs.push(m));
-  await page.route('https://www.instagram.com/**', r => r.fulfill({ contentType: 'text/html', body: page_html }));
+  await page.route('https://www.instagram.com/**', async r => {
+    if (slowPath && new URL(r.request().url()).pathname === slowPath) await new Promise(res => setTimeout(res, 2500));
+    await r.fulfill({ contentType: 'text/html', body: page_html });
+  });
   const cfg = { redirectPath: rules.redirectPath, blockFeed, blockedPaths: rules.blockedPaths,
                 hideSelectors: rules.hideSelectors, feedSelectors: rules.feedSelectors };
   await page.addInitScript(`window.webkit = { messageHandlers: { unreel: { postMessage: m => window.__record(m) } } };
@@ -71,6 +74,13 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   await page.evaluate(() => window.__unreel.configure(Object.assign({}, window.__unreelConfig, { blockFeed: true })));
   await settle(page);
   assert.strictEqual(pathOf(page), '/direct/inbox/', 'live reconfigure applies');
+
+  // Slow redirect target (overloaded phone): must count once, not every timer tick.
+  page = await makePage(browser, true, '/direct/inbox/');
+  await page.goto('https://www.instagram.com/reels/');
+  await page.waitForTimeout(3500);
+  assert.strictEqual(pathOf(page), '/direct/inbox/', 'slow redirect completes');
+  assert.strictEqual(page.msgs.filter(m => m.count).length, 1, 'slow redirect counted once, got ' + page.msgs.length);
 
   await browser.close();
   console.log('All cage.js tests passed');

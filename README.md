@@ -10,6 +10,7 @@ A free iPhone app that opens Instagram **without Reels, Explore or the endless f
 - `Unreel/Web/cage.js` runs on every page. It watches the URL and sends you away from Reels, Explore and (optionally) the home feed, and hides links to them. Tapping the search icon goes straight to search instead of the Explore grid.
 - The native side (`InstagramWebView.swift`) blocks the same paths on full page loads, opens outside links in Safari, and never hands off to the Instagram app.
 - **Rules update without an App Store release.** The app downloads `config/rules.json` from this repo (at most hourly) and uses it if its `version` is higher than what it has. When Instagram changes its site and something slips through, edit the patterns/selectors, bump `version`, and push to `main`.
+- **Native tab bar** (Messages, Search, Activity, Profile, plus Home when the feed is allowed). Instagram's mobile site has no tab bar on the messages page, so this is how you get around.
 - **On-device stats:** "X blocked today", a 7-day chart, and an estimated time saved. Stored only on the phone.
 - **Optional daily limit:** after N minutes a day, a "that's enough for today" screen appears (with a "5 more minutes" escape hatch that is counted).
 - **Anonymous impact metric:** one TelemetryDeck signal per user per day with counts only (Reels blocked, minutes in app, estimated minutes saved). Users can turn it off in Settings.

@@ -6,6 +6,7 @@ import WebKit
 struct InstagramWebView: UIViewRepresentable {
     let rules: Rules
     let blockFeed: Bool
+    let navigator: WebNavigator
     let onBlocked: @MainActor (BlockKind, Bool) -> Void
 
     static func instagramURL(_ path: String) -> URL {
@@ -38,6 +39,7 @@ struct InstagramWebView: UIViewRepresentable {
         webView.scrollView.refreshControl = refresh
 
         context.coordinator.webView = webView
+        navigator.attach(webView)
         context.coordinator.installScript(force: true)
         webView.load(URLRequest(url: Self.instagramURL(rules.redirectPath)))
         return webView

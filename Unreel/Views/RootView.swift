@@ -7,6 +7,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @StateObject private var navigator = WebNavigator()
     @State private var showStats = false
     @State private var showSettings = false
     @State private var extendedUntil: Date?
@@ -25,10 +26,11 @@ struct RootView: View {
         VStack(spacing: 0) {
             topBar
             Divider()
-            InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed) { kind, counts in
+            InstagramWebView(rules: rulesStore.rules, blockFeed: settings.blockFeed, navigator: navigator) { kind, counts in
                 if counts { stats.record(kind) }
             }
-            .ignoresSafeArea(edges: .bottom)
+            Divider()
+            TabBar(navigator: navigator, showHome: !settings.blockFeed)
         }
         .overlay {
             if limitReached {
