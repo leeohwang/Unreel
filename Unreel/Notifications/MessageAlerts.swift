@@ -72,7 +72,14 @@ enum MessageAlerts {
         guard isEnabled else { return }
         let request = BGAppRefreshTaskRequest(identifier: taskID)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
-        try? BGTaskScheduler.shared.submit(request)
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            // Expected in the Simulator, which doesn't run app refresh tasks.
+            #if DEBUG
+            print("Message alerts: couldn't schedule a check:", error)
+            #endif
+        }
     }
 
     private static func handle(_ task: BGAppRefreshTask) {
@@ -163,10 +170,7 @@ enum MessageAlerts {
     /// view still loads and alerts there. (iOS's own refresh scheduling can only be seen on a device.)
     static func debugCheckInBackgroundIfAsked() {
         guard ProcessInfo.processInfo.arguments.contains("-UnreelCheckInBackground") else { return }
-        var taskID = UIBackgroundTaskIdentifier.invalid
-        taskID = UIApplication.shared.beginBackgroundTask(withName: "debug-message-check") {
-            UIApplication.shared.endBackgroundTask(taskID)
-        }
+        let taskID = UIApplication.shared.beginBackgroundTask(withName: "debug-message-check")
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(5))
             let ok = await check(debug: true)
