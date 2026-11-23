@@ -5,18 +5,59 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
+  developmentLanguage: en
 packages:
   TelemetryDeck:
     url: https://github.com/TelemetryDeck/SwiftSDK
     from: 2.0.0
+settings:
+  base:
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 1
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    # Set your Apple team ID here, or pick your team in Xcode > Signing & Capabilities.
+    DEVELOPMENT_TEAM: ""
+
+# The app and its Screen Time extensions share settings through this App Group,
+# and all need Apple's Family Controls entitlement (request it for App Store
+# distribution at developer.apple.com/contact/request/family-controls-distribution).
+targetTemplates:
+  ScreenTimeExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Shared
+      # For the translated shield text.
+      - path: Unreel/Resources
+        excludes:
+          - rules.json
+    entitlements:
+      path: Extensions/${target_name}.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.com.leeohwang.unreel
+
 targets:
   Unreel:
     type: application
     platform: iOS
     sources:
       - path: Unreel
+      - path: Shared
     dependencies:
       - package: TelemetryDeck
+      - target: UnreelShield
+      - target: UnreelShieldAction
+      - target: UnreelMonitor
+    entitlements:
+      path: Unreel/Unreel.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.com.leeohwang.unreel
     info:
       path: Unreel/Info.plist
       properties:
@@ -25,18 +66,67 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.productivity
+        NSCameraUsageDescription: Take a photo or video to post.
+        NSMicrophoneUsageDescription: Record video with sound to post.
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel
-        MARKETING_VERSION: 1.0.0
-        CURRENT_PROJECT_VERSION: 1
-        TARGETED_DEVICE_FAMILY: "1"
-        SWIFT_VERSION: "5.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        CODE_SIGN_STYLE: Automatic
-        # Set your Apple team ID here, or pick your team in Xcode > Signing & Capabilities.
-        DEVELOPMENT_TEAM: ""
+
+  # The screen shown when the locked Instagram app is opened.
+  UnreelShield:
+    templates: [ScreenTimeExtension]
+    sources:
+      - path: Extensions/Shield
+    info:
+      path: Extensions/Shield/Info.plist
+      properties:
+        CFBundleDisplayName: Unreel Shield
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldConfigurationExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.shield
+
+  # What the shield's buttons do ("Open Unreel", posting pass).
+  UnreelShieldAction:
+    templates: [ScreenTimeExtension]
+    sources:
+      - path: Extensions/ShieldAction
+    info:
+      path: Extensions/ShieldAction/Info.plist
+      properties:
+        CFBundleDisplayName: Unreel Shield Action
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.shieldaction
+
+  # Puts the lock back when a posting pass ends.
+  UnreelMonitor:
+    templates: [ScreenTimeExtension]
+    sources:
+      - path: Extensions/Monitor
+    info:
+      path: Extensions/Monitor/Info.plist
+      properties:
+        CFBundleDisplayName: Unreel Monitor
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ActivityMonitorExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.monitor

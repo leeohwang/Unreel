@@ -9,7 +9,12 @@ A free iPhone app that opens Instagram **without Reels, Explore or the endless f
 - A SwiftUI app shows `instagram.com` in a `WKWebView` with a Safari user agent, so Instagram serves its full mobile site. You log in normally; your session lives only in the web view on your phone.
 - `Unreel/Web/cage.js` runs on every page. It watches the URL and sends you away from Reels, Explore and (optionally) the home feed, and hides links to them. Tapping the search icon goes straight to search instead of the Explore grid.
 - The native side (`InstagramWebView.swift`) blocks the same paths on full page loads, opens outside links in Safari, and never hands off to the Instagram app.
-- **Rules update without an App Store release.** The app downloads `config/rules.json` from this repo (at most hourly) and uses it if its `version` is higher than what it has. When Instagram changes its site and something slips through, edit the patterns/selectors, bump `version`, and push to `main`.
+- **Rules update without an App Store release.** The app downloads `config/rules.json` from this repo (at most every 5 minutes, when the app comes to the foreground) and uses it if its `version` is higher than what it has. When Instagram changes its site and something slips through, edit the patterns/selectors, bump `version`, and push to `main`.
+- **Instagram's own bottom bar, minus Reels.** On pages where Instagram leaves it out (the inbox and chats) a native bar with the same icons takes its place. The header has "+" (Post / Story, through Instagram's own editor), Activity and Settings.
+- **Reels friends send still play** (Settings toggle). Swiping on to more Reels returns to the chat.
+- **Screen Time lock (optional, `Shared/` + `Extensions/`).** Locks the real Instagram app with FamilyControls/ManagedSettings so its notifications still arrive, but opening it shows Unreel's shield. "Open Unreel" posts a local notification that opens your messages; a posting pass lifts the lock for 5 minutes, twice a day. Offered once after the app has been used on two days.
+- **Breakage reports:** cage.js reports when Instagram's page changes in a way it can't handle (bar missing, create flow failed, redirect loop, bad rules file) as an anonymous TelemetryDeck signal, once per kind per day.
+- **Languages:** English, Spanish, French, German, Korean. Regenerate the `.strings` files when adding UI text.
 - **On-device stats:** "X blocked today", a 7-day chart, and an estimated time saved. Stored only on the phone.
 - **Optional daily limit:** after N minutes a day, a "that's enough for today" screen appears (with a "5 more minutes" escape hatch that is counted).
 - **Anonymous impact metric:** one TelemetryDeck signal per user per day with counts only (Reels blocked, minutes in app, estimated minutes saved). Users can turn it off in Settings.
@@ -43,8 +48,7 @@ See [docs/APP_STORE.md](docs/APP_STORE.md) for the listing text, privacy label a
 
 ## Roadmap
 
-- v1.1: optional Screen Time lock of the real Instagram app (FamilyControls + ManagedSettings). Needs Apple's Family Controls distribution entitlement, which you request from Apple per bundle ID and which can take a week or more.
-- Hide Reels inside the home feed (for people who keep the feed on).
+- The Screen Time lock needs Apple's Family Controls distribution entitlement for the app and each extension before it works in TestFlight or the App Store. Request it early; it can take a week or more.
 - Streaks and a weekly summary notification.
 
 ## Credits

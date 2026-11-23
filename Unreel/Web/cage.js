@@ -9,6 +9,23 @@
   var rules = [];
   var styleEl = null;
   var lastPath = null;
+  // Set once we start leaving a blocked page. location.replace() is not instant
+  // (seconds on a slow device), and without this the 400 ms timer would fire
+  // replace() again and again: overcounting blocks and restarting the load.
+  var redirecting = false;
+  // While the app is starting Instagram's create flow, which lives on the
+  // (otherwise blocked) home feed, the feed rule steps aside until this time.
+  var allowFeedUntil = 0;
+  // The last page the visitor was allowed to be on, and the chat a shared Reel
+  // was opened from (see allowFrom in check()).
+  var lastAllowedPath = null, reelOrigin = null;
+  var reported = {};
+  // Anonymous "Instagram changed something" signal, at most once per kind per page load.
+  function breakage(what) {
+    if (reported[what]) return;
+    reported[what] = true;
+    post({ type: 'breakage', what: what });
+  }
 
   function post(msg) {
     try { window.webkit.messageHandlers.unreel.postMessage(msg); } catch (e) {}
@@ -22,11 +39,90 @@
     });
   }
 
+  // A Reel opened in a chat plays in a viewer over the chat (the URL stays
+  // /direct/t/...) that goes on to Instagram's suggested Reels when you swipe.
+  // Lock that viewer's scroller and blank the suggested ones. They keep their
+  // size: collapsed, Instagram's "load more" trigger stays on screen and it
+  // keeps fetching Reels in the background.
+  // Instagram puts the Reel's buttons (like, comment, share, more) outside a
+  // narrower overflow:hidden box. They still show, but WebKit drops taps on
+  // them, so let the boxes around the buttons overflow.
+  var reelButtonLabels = ['Comment', 'Share', 'Comentar', 'Compartir', 'Commenter', 'Partager',
+    'Kommentieren', 'Teilen', '댓글 달기', '공유하기', '공유'];
+  var sharedReelCSS = ':has(> div > [data-reel-type="reshared"]) { overflow: hidden !important; }\n' +
+    '[data-reel-type="suggested"] { visibility: hidden !important; pointer-events: none !important; }\n' +
+    '[data-reel-type="reshared"] div:has(' + reelButtonLabels.map(function (l) {
+      return 'svg[aria-label="' + l + '"]';
+    }).join(', ') + ') { overflow: visible !important; }\n';
+
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
-    return sels.length ? sels.join(',\n') + ' { display: none !important; }' : '';
+    else sels = sels.concat(cfg.filteredFeedSelectors || []); // feed shown: no Reels in it
+    // Links to single Reels: kept inside chats when friends' Reels may play.
+    (cfg.reelLinkSelectors || []).forEach(function (sel) {
+      sels.push(cfg.allowDmReels ? 'html:not([data-unreel-path^="/direct/"]) ' + sel : sel);
+    });
+    return sels.join(',\n') + ' { display: none !important; }\n' + sharedReelCSS + (cfg.extraCSS || '');
   }
+
+  // Earlier builds learned a CSS rule that hid Instagram's bottom bar. The bar
+  // is used again now (minus Reels, which hideSelectors removes), so drop it.
+  try { localStorage.removeItem('unreel.barSelectors'); } catch (e) {}
+
+  // Is Instagram's own bottom tab bar on screen? It has no role or stable class,
+  // so look for a link it contains whose nearest position:fixed ancestor is a
+  // short strip along the bottom. Instagram leaves the bar out on some pages
+  // (the DM inbox and chats); the app shows its own tab bar there instead, so
+  // nobody gets stuck.
+  function igBarOnScreen() {
+    var sels = cfg.igBarLinks || [];
+    if (!sels.length || !document.body) return false;
+    var links = document.querySelectorAll(sels.join(','));
+    for (var i = 0; i < links.length; i++) {
+      if (!links[i].getClientRects().length) continue; // not drawn
+      for (var el = links[i].parentElement; el && el !== document.body; el = el.parentElement) {
+        if (getComputedStyle(el).position !== 'fixed') continue;
+        var r = el.getBoundingClientRect();
+        if (r.height > 0 && r.height <= 120 && r.bottom >= innerHeight - 4) return true;
+        break;
+      }
+    }
+    return false;
+  }
+
+  // Tell the app when the bar comes and goes. "Shown" is reported at once so the
+  // app's bar steps aside immediately; "gone" only after it stays gone a moment,
+  // so Instagram re-rendering the bar between pages doesn't make the app's bar
+  // blink in and out.
+  var igBarReported = null, igBarGoneTimer = null, igBarQueued = false;
+  function reportIgBar() {
+    igBarQueued = false;
+    if (igBarOnScreen()) {
+      clearTimeout(igBarGoneTimer); igBarGoneTimer = null;
+      if (igBarReported !== true) { igBarReported = true; post({ type: 'igBar', visible: true }); }
+    } else if (igBarReported !== false && !igBarGoneTimer) {
+      igBarGoneTimer = setTimeout(function () {
+        igBarGoneTimer = null;
+        if (!igBarOnScreen()) { igBarReported = false; post({ type: 'igBar', visible: false }); }
+      }, 600);
+    }
+  }
+  function queueIgBar() {
+    if (igBarQueued) return;
+    igBarQueued = true;
+    requestAnimationFrame(reportIgBar);
+  }
+
+  // Instagram's Search button points at /explore/, which is blocked (it would
+  // redirect to search with a full reload). Go straight to search in-page.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href="/explore/"]');
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    navigate('/explore/search/');
+  }, true);
 
   function applyStyle() {
     if (!styleEl) {
@@ -40,18 +136,161 @@
 
   function check() {
     var path = location.pathname;
+    // Lets rules' CSS target a page, e.g. html[data-unreel-path="/direct/inbox/"].
+    var root = document.documentElement;
+    if (root && root.getAttribute('data-unreel-path') !== path) root.setAttribute('data-unreel-path', path);
+    if (redirecting) return;
     if (path === lastPath) return;
     lastPath = path;
     var fallback = cfg.redirectPath || '/direct/inbox/';
     for (var i = 0; i < rules.length; i++) {
       if (!rules[i].re.test(path)) continue;
       var r = rules[i].rule;
+      if (r.kind === 'feed' && Date.now() < allowFeedUntil) { lastPath = null; continue; }
+      // A Reel a friend sent: allowed when opened from a chat (allowFrom), so it
+      // plays. Swiping on to the next Reel comes from a Reel page, not a chat,
+      // so it is blocked and the visitor goes back to that chat.
+      if (r.allowFrom && cfg.allowDmReels) {
+        var from = null;
+        try { from = new RegExp(r.allowFrom); } catch (e) {}
+        if (from && lastAllowedPath && from.test(lastAllowedPath)) {
+          reelOrigin = lastAllowedPath;
+          lastAllowedPath = path;
+          reelVideo = null;
+          snapStart = null;
+          return;
+        }
+        if (reelOrigin) {
+          leaveSharedReel(r.count !== false);
+          return;
+        }
+      }
       var target = r.redirect || fallback;
       if (target === path) return; // never loop
+      // Report (never stop blocking) when redirects pile up: a rule and Instagram
+      // are probably fighting.
+      if (tooManyRedirects()) breakage('redirect-loop');
+      redirecting = true;
       post({ type: 'blocked', kind: r.kind, count: r.count !== false });
-      lastPath = null;
       location.replace(target);
       return;
+    }
+    lastAllowedPath = path;
+    if (!/^\/([^/]+\/)?reel\//.test(path)) reelOrigin = null;
+  }
+
+  function leaveSharedReel(count) {
+    post({ type: 'blocked', kind: 'reels', count: count });
+    var back = reelOrigin;
+    reelOrigin = null;
+    reelVideo = null;
+    snapStart = null;
+    lastPath = null;
+    navigate(back);
+  }
+
+  function onSharedReel() {
+    return !!reelOrigin && /^\/([^/]+\/)?reel\//.test(location.pathname);
+  }
+
+  // Instagram's Reel viewer can move on to more Reels without changing the URL,
+  // so on a Reel opened from a chat, watch the page itself too:
+  // - a second, different video starting to play, or
+  // - a swipe of most of a screen in a snapping (Reels-style) scroller
+  // both mean "the next Reel", which sends you back to the chat.
+  var reelVideo = null, reelVideoSrc = '', snapStart = null;
+  document.addEventListener('play', function (e) {
+    var v = e.target;
+    if (!v || v.tagName !== 'VIDEO' || !onSharedReel()) return;
+    var src = v.currentSrc || v.src || '';
+    if (!reelVideo) { reelVideo = v; reelVideoSrc = src; return; }
+    if (v === reelVideo && (!src || !reelVideoSrc || src === reelVideoSrc)) return;
+    try { v.pause(); } catch (err) {}
+    leaveSharedReel(true);
+  }, true);
+  document.addEventListener('scroll', function (e) {
+    if (!onSharedReel()) return;
+    var el = e.target === document ? document.scrollingElement : e.target;
+    if (!el || el.nodeType !== 1) return;
+    var snap = getComputedStyle(el).scrollSnapType;
+    if (!snap || snap === 'none') return;
+    if (!snapStart || snapStart.el !== el) { snapStart = { el: el, top: el.scrollTop, left: el.scrollLeft }; return; }
+    var moved = Math.max(Math.abs(el.scrollTop - snapStart.top), Math.abs(el.scrollLeft - snapStart.left));
+    if (moved > Math.min(el.clientHeight, innerHeight) * 0.5) leaveSharedReel(true);
+  }, true);
+
+  // The same viewer, if Instagram renames that marker: on a chat page, a vertical
+  // swipe of most of a screen in a snapping scroller with videos goes back to
+  // the shared Reel (counted), and videos other than the shared one stay paused.
+  var dmSnapStart = typeof WeakMap === 'function' ? new WeakMap() : null, dmBlockedAt = 0;
+  function sharedItem(el) {
+    return el.querySelector('[data-reel-type="reshared"]');
+  }
+  document.addEventListener('scroll', function (e) {
+    if (!cfg.allowDmReels || !dmSnapStart || location.pathname.indexOf('/direct/') !== 0) return;
+    var el = e.target;
+    if (!el || el.nodeType !== 1 || !el.querySelector('video')) return;
+    var snap = getComputedStyle(el).scrollSnapType;
+    if (!snap || snap === 'none' || /^x\b|inline/.test(snap)) return;
+    var item = sharedItem(el), home;
+    if (item) home = item.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
+    else {
+      if (!dmSnapStart.has(el)) dmSnapStart.set(el, el.scrollTop);
+      home = dmSnapStart.get(el);
+    }
+    if (Math.abs(el.scrollTop - home) <= el.clientHeight * 0.5) return;
+    el.scrollTop = home;
+    var vids = el.querySelectorAll('video');
+    for (var i = 0; i < vids.length; i++) {
+      if (!item || !item.contains(vids[i])) { try { vids[i].pause(); } catch (err) {} }
+    }
+    var now = Date.now();
+    if (now - dmBlockedAt > 2000) { dmBlockedAt = now; post({ type: 'blocked', kind: 'reels', count: true }); }
+  }, true);
+  document.addEventListener('play', function (e) {
+    var v = e.target;
+    if (!cfg.allowDmReels || !v || v.tagName !== 'VIDEO' || location.pathname.indexOf('/direct/') !== 0) return;
+    var holder = v.closest && v.closest('[data-reel-type]');
+    if (holder && holder.getAttribute('data-reel-type') !== 'reshared') { try { v.pause(); } catch (err) {} }
+  }, true);
+
+  // More than 8 redirects in 20 s.
+  function tooManyRedirects() {
+    var now = Date.now(), list = [];
+    try { list = JSON.parse(sessionStorage.getItem('unreel.redirects') || '[]'); } catch (e) {}
+    list = list.filter(function (t) { return now - t < 20000; });
+    list.push(now);
+    try { sessionStorage.setItem('unreel.redirects', JSON.stringify(list)); } catch (e) {}
+    return list.length > 8;
+  }
+
+  // With the home feed shown, hide suggested and sponsored posts. Instagram marks
+  // them only with text, so look for the label (rules list it in several languages).
+  function hideMarkedPosts() {
+    if (cfg.blockFeed || location.pathname !== '/') return;
+    var markers = cfg.feedHideTextMarkers || [];
+    if (!markers.length) return;
+    var posts = document.querySelectorAll('article:not([data-unreel-checked])');
+    for (var i = 0; i < posts.length; i++) {
+      var post_ = posts[i], spans = post_.querySelectorAll('span');
+      for (var j = 0; j < spans.length; j++) {
+        if (spans[j].childElementCount === 0 && markers.indexOf(spans[j].textContent.trim()) !== -1) {
+          post_.style.setProperty('display', 'none', 'important');
+          break;
+        }
+      }
+      // Instagram fills posts in after creating them, so only mark once loaded.
+      if (spans.length > 3) post_.setAttribute('data-unreel-checked', '');
+    }
+    // The "Suggested for you" accounts block: a heading in a wrapper, inside the
+    // block (block > div > h4). It has no stable attributes, only the heading text.
+    var heads = document.querySelectorAll('main h4');
+    for (var k = 0; k < heads.length; k++) {
+      if (markers.indexOf(heads[k].textContent.trim()) === -1) continue;
+      var block = heads[k].parentElement && heads[k].parentElement.parentElement;
+      if (block && block.tagName !== 'MAIN' && !block.querySelector('article')) {
+        block.style.setProperty('display', 'none', 'important');
+      }
     }
   }
 
@@ -65,10 +304,195 @@
   });
   window.addEventListener('popstate', check);
   document.addEventListener('DOMContentLoaded', applyStyle);
+  // Signed in, on a page that should have Instagram's bottom bar, and it never
+  // showed up: Instagram probably changed it, so the app's bar is all people get.
+  setTimeout(function () {
+    var signedIn = /(?:^|;\s*)ds_user_id=/.test(document.cookie);
+    var noBarPage = /^\/(direct|accounts|stories|create|challenge|p)\//.test(location.pathname);
+    if (signedIn && !noBarPage && igBarReported !== true) breakage('igbar-missing');
+  }, 20000);
+  var observer = new MutationObserver(function () {
+    if (!styleEl || !styleEl.isConnected) applyStyle();
+    queueIgBar();
+    hideMarkedPosts();
+  });
+  observer.observe(document, { childList: true, subtree: true });
+
   setInterval(function () {
     check();
     if (!styleEl || !styleEl.isConnected) applyStyle();
+    queueIgBar();
   }, 400);
+
+  // Opens the signed-in user's own profile. Instagram's site has no "/me" URL.
+  // (Its current_user API answers 400 "spam" to scripted calls, so don't use it.)
+  // The page embeds the viewer's data: the "username" nearest the viewer's id
+  // (the ds_user_id cookie) is theirs. Fall back to Instagram's own profile link,
+  // then to Edit profile, which at least shows the account.
+  function ownUsername() {
+    var uid = (document.cookie.match(/(?:^|;\s*)ds_user_id=(\d+)/) || [])[1];
+    var html = document.documentElement.innerHTML;
+    if (uid) {
+      var ids = [], m, re = new RegExp('"id":"' + uid + '"', 'g');
+      while ((m = re.exec(html))) ids.push(m.index);
+      var best = null, bestDist = 2000, ure = /"username":"([A-Za-z0-9._]{1,30})"/g;
+      while ((m = ure.exec(html))) {
+        for (var i = 0; i < ids.length; i++) {
+          var d = Math.abs(ids[i] - m.index);
+          if (d < bestDist) { bestDist = d; best = m[1]; }
+        }
+      }
+      if (best) return best;
+    }
+    var imgs = document.querySelectorAll('a[href] img[alt]');
+    for (var j = 0; j < imgs.length; j++) {
+      var href = imgs[j].closest('a').getAttribute('href') || '';
+      if (/profile picture/i.test(imgs[j].alt) && /^\/[A-Za-z0-9._]+\/$/.test(href)) return href.slice(1, -1);
+    }
+    return null;
+  }
+
+  // Moves to `path` the fast way when possible. Instagram is a single-page app:
+  // clicking one of its own links (its hidden bottom bar keeps them in the page)
+  // lets its router swap the view in place, without reloading the whole site.
+  // Falls back to a normal page load.
+  function navigate(path) {
+    if (location.pathname === path) return 'same';
+    var link = document.querySelector('a[href="' + path.replace(/"/g, '') + '"]');
+    if (link) { link.click(); return 'spa'; }
+    // No link on this page (e.g. the DM inbox). Instagram's router listens
+    // for popstate, so push the URL and let it render in-page instead of
+    // paying a ~10s full reload. If nothing re-renders, do a real load.
+    try {
+      history.pushState({}, '', path);
+      var changed = false;
+      var mo = new MutationObserver(function () { changed = true; mo.disconnect(); });
+      mo.observe(document.body, { childList: true, subtree: true });
+      dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+      setTimeout(function () {
+        mo.disconnect();
+        if (!changed) location.assign(path);
+      }, 3000);
+      return 'spa-pop';
+    } catch (e) {
+      location.assign(path);
+      return 'load';
+    }
+  }
+
+  function goProfile() {
+    var name = null;
+    try { name = ownUsername(); } catch (e) {}
+    return navigate(name ? '/' + encodeURIComponent(name) + '/' : '/accounts/edit/');
+  }
+
+  // Creating a post or story. Instagram's mobile site only offers this from the
+  // "+" on the home feed's header: "+" opens a Post / Story menu, and each item
+  // opens a file input. The app picks the photo natively (PHPicker) and hands it
+  // over here; this opens Instagram's menu and gives the photo to the file input
+  // Instagram asks for, then Instagram's own editor (/create/style/, or the
+  // story editor) takes over. Nothing is posted until the user taps Share.
+  var pendingFile = null, pendingUntil = 0;
+  var nativeFileClick = HTMLInputElement.prototype.click;
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file' && pendingFile && Date.now() < pendingUntil) {
+      var input = this, file = pendingFile;
+      pendingFile = null;
+      // Answer the way a real picker does: later, not inside click().
+      // Instagram is not ready for the change event until click() returns.
+      setTimeout(function () {
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }, 100);
+      return;
+    }
+    return nativeFileClick.apply(this, arguments);
+  };
+
+  // Instagram's menus open on pointer events, not on a bare click().
+  function tap(el) {
+    var r = el.getBoundingClientRect();
+    var o = { bubbles: true, cancelable: true, composed: true, view: window, button: 0, buttons: 1,
+              clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
+              pointerId: 1, pointerType: 'touch', isPrimary: true };
+    ['pointerdown', 'mousedown'].forEach(function (t) {
+      el.dispatchEvent(t.indexOf('pointer') === 0 ? new PointerEvent(t, o) : new MouseEvent(t, o));
+    });
+    o.buttons = 0;
+    ['pointerup', 'mouseup', 'click'].forEach(function (t) {
+      el.dispatchEvent(t.indexOf('pointer') === 0 ? new PointerEvent(t, o) : new MouseEvent(t, o));
+    });
+  }
+
+  // The feed header's "+" is the a[href="#"] next to its Notifications link.
+  function createButton() {
+    var notif = document.querySelector('a[href="/notifications/"]');
+    for (var el = notif && notif.parentElement, n = 0; el && n < 5; el = el.parentElement, n++) {
+      var a = el.querySelector('a[href="#"]');
+      if (a && a.querySelector('svg')) return a;
+    }
+    return null;
+  }
+
+  function menuItem(label) {
+    var dialogs = document.querySelectorAll('[role="dialog"]');
+    for (var i = 0; i < dialogs.length; i++) {
+      var spans = dialogs[i].querySelectorAll('span');
+      for (var j = 0; j < spans.length; j++) {
+        if (spans[j].childElementCount === 0 && spans[j].textContent.trim() === label) {
+          return spans[j].closest('[role="button"],a,button') || spans[j];
+        }
+      }
+    }
+    return null;
+  }
+
+  function waitFor(find, ms, done) {
+    var until = Date.now() + ms;
+    (function poll() {
+      var el = find();
+      if (el) return done(el);
+      if (Date.now() > until) return done(null);
+      setTimeout(poll, 150);
+    })();
+  }
+
+  // kind: 'post' or 'story'. base64: a JPEG (Instagram's inputs take JPEG).
+  function create(kind, base64) {
+    var bytes = atob(base64), arr = new Uint8Array(bytes.length);
+    for (var i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    pendingFile = new File([arr], 'photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+    pendingUntil = Date.now() + 20000;
+    allowFeedUntil = Date.now() + 20000;
+    var labels = (cfg.createLabels || {})[kind] || [kind === 'story' ? 'Story' : 'Post'];
+    var fail = function (why) { pendingFile = null; allowFeedUntil = 0; post({ type: 'create', ok: false, why: why }); };
+    if (location.pathname !== '/') navigate('/');
+    waitFor(createButton, 15000, function (button) {
+      if (!button) return fail('no-button');
+      // Instagram ignores the button until the feed has settled.
+      setTimeout(function () {
+        tap(button);
+        waitFor(function () {
+          for (var l = 0; l < labels.length; l++) { var m = menuItem(labels[l]); if (m) return m; }
+          return null;
+        }, 4000, function (item) {
+          if (!item) return fail('no-menu');
+          // Give the menu a moment to finish opening before choosing from it.
+          setTimeout(function () { tap(item); }, 500);
+          // Leaving the feed (into the editor) ends the exception right away.
+          waitFor(function () { return location.pathname !== '/' ? 1 : null; }, 8000, function (left) {
+            allowFeedUntil = 0;
+            if (!left) { pendingFile = null; lastPath = null; check(); return post({ type: 'create', ok: false, why: 'no-editor' }); }
+            post({ type: 'create', ok: true, path: location.pathname });
+          });
+        });
+      }, 2000);
+    });
+    return 'started';
+  }
 
   window.__unreel = {
     configure: function (next) {
@@ -77,7 +501,10 @@
       applyStyle();
       lastPath = null;
       check();
-    }
+    },
+    goProfile: goProfile,
+    navigate: navigate,
+    create: create
   };
 
   compile();

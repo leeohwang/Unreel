@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct UnreelApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var stats = StatsStore()
     @StateObject private var settings = AppSettings()
     @StateObject private var rules = RulesStore()
@@ -16,6 +17,7 @@ struct UnreelApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            LockModel.restoreOnLaunch()
             Task { await rules.refresh() }
             Analytics.sendDailySummaryIfNeeded(stats: stats, settings: settings, rules: rules.rules)
         }

@@ -6,6 +6,8 @@ import WebKit
 struct InstagramWebView: UIViewRepresentable {
     let rules: Rules
     let blockFeed: Bool
+    let allowDmReels: Bool
+    let navigator: WebNavigator
     let onBlocked: @MainActor (BlockKind, Bool) -> Void
 
     static func instagramURL(_ path: String) -> URL {
@@ -32,12 +34,18 @@ struct InstagramWebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.allowsLinkPreview = false
+        // Transparent until Instagram paints, so dark mode never flashes white;
+        // RootView fills in behind it with the page's colour.
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
 
         let refresh = UIRefreshControl()
         refresh.addTarget(context.coordinator, action: #selector(Coordinator.pullToRefresh(_:)), for: .valueChanged)
         webView.scrollView.refreshControl = refresh
 
         context.coordinator.webView = webView
+        navigator.attach(webView)
         context.coordinator.installScript(force: true)
         webView.load(URLRequest(url: Self.instagramURL(rules.redirectPath)))
         return webView
@@ -73,19 +81,13 @@ struct InstagramWebView: UIViewRepresentable {
 
         init(parent: InstagramWebView) { self.parent = parent }
 
+        /// The rules plus the user's settings, as the page script reads them.
         private var configJSON: String {
-            struct PageConfig: Encodable {
-                let redirectPath: String
-                let blockFeed: Bool
-                let blockedPaths: [PathRule]
-                let hideSelectors: [String]
-                let feedSelectors: [String]
-            }
-            let r = parent.rules
-            let page = PageConfig(redirectPath: r.redirectPath, blockFeed: parent.blockFeed,
-                                  blockedPaths: r.blockedPaths, hideSelectors: r.hideSelectors,
-                                  feedSelectors: r.feedSelectors)
-            let data = (try? JSONEncoder().encode(page)) ?? Data("{}".utf8)
+            guard let rulesData = try? JSONEncoder().encode(parent.rules),
+                  var object = (try? JSONSerialization.jsonObject(with: rulesData)) as? [String: Any] else { return "{}" }
+            object["blockFeed"] = parent.blockFeed
+            object["allowDmReels"] = parent.allowDmReels
+            let data = (try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])) ?? Data("{}".utf8)
             return String(decoding: data, as: UTF8.self)
         }
 
@@ -112,10 +114,22 @@ struct InstagramWebView: UIViewRepresentable {
         // MARK: Messages from cage.js (in-page navigations)
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard let body = message.body as? [String: Any],
-                  body["type"] as? String == "blocked",
-                  let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
-            parent.onBlocked(kind, body["count"] as? Bool ?? true)
+            guard let body = message.body as? [String: Any] else { return }
+            switch body["type"] as? String {
+            case "blocked":
+                guard let kind = (body["kind"] as? String).flatMap(BlockKind.init(rawValue:)) else { return }
+                parent.onBlocked(kind, body["count"] as? Bool ?? true)
+            case "create":
+                let ok = body["ok"] as? Bool ?? false
+                parent.navigator.createFinished(ok: ok)
+                if !ok { Analytics.breakage("create-" + (body["why"] as? String ?? "unknown"), rulesVersion: parent.rules.version) }
+            case "breakage":
+                Analytics.breakage(body["what"] as? String ?? "unknown", rulesVersion: parent.rules.version)
+            case "igBar":
+                parent.navigator.igBarVisible = body["visible"] as? Bool ?? false
+            default:
+                break
+            }
         }
 
         // MARK: Full page navigations
@@ -145,7 +159,8 @@ struct InstagramWebView: UIViewRepresentable {
 
             let host = url.host?.lowercased() ?? ""
             if Self.isInstagram(host) {
-                if let rule = parent.rules.match(path: url.path.isEmpty ? "/" : url.path, blockFeed: parent.blockFeed) {
+                if let rule = parent.rules.match(path: url.path.isEmpty ? "/" : url.path, blockFeed: parent.blockFeed,
+                                                 fromPath: webView.url?.path, allowDmReels: parent.allowDmReels) {
                     decisionHandler(.cancel)
                     parent.onBlocked(rule.kind, rule.count ?? true)
                     let target = rule.redirect ?? parent.rules.redirectPath
@@ -166,6 +181,10 @@ struct InstagramWebView: UIViewRepresentable {
                      for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             if action.targetFrame == nil { webView.load(action.request) }
             return nil
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            parent.navigator.pageFinishedLoading()
         }
 
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {

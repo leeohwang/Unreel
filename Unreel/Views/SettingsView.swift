@@ -13,11 +13,27 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    NavigationLink {
+                        StatsView(embedded: true)
+                    } label: {
+                        Label("Your stats", systemImage: "chart.bar")
+                    }
+                } footer: {
+                    Text("How many Reels you skipped and the time you saved. Stored only on this iPhone.")
+                }
+
+                Section {
                     Toggle("Block home feed", isOn: $settings.blockFeed)
                 } header: {
                     Text("Blocking")
                 } footer: {
-                    Text("Reels and Explore are always blocked. With the feed blocked, the app opens to your messages.")
+                    Text("Reels and Explore are always blocked. With the feed blocked, the app opens to your messages. With it on, you see posts from people you follow, without Reels or suggested posts.")
+                }
+
+                Section {
+                    Toggle("Play Reels friends send", isOn: $settings.allowDmReels)
+                } footer: {
+                    Text("A Reel someone sends you in a chat plays. Swiping to more Reels takes you back to the chat.")
                 }
 
                 Section {
@@ -29,6 +45,8 @@ struct SettingsView: View {
                 } footer: {
                     Text("After this much time in the app each day, you'll see a reminder to stop.")
                 }
+
+                LockSection()
 
                 Section {
                     Toggle("Share anonymous stats", isOn: $settings.shareStats)
@@ -42,7 +60,7 @@ struct SettingsView: View {
 
                 Section {
                     Link("Privacy policy", destination: Config.privacyPolicyURL)
-                    Link("Report a problem", destination: Config.supportURL)
+                    Link("Report a problem", destination: Config.reportProblemURL(rulesVersion: rulesStore.rules.version))
                     LabeledContent("Blocking rules", value: "v\(rulesStore.rules.version)")
                 } footer: {
                     Text("Unreel is free and open source. It is not affiliated with, endorsed by, or sponsored by Instagram or Meta.")

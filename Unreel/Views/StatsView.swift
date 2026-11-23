@@ -6,8 +6,20 @@ struct StatsView: View {
     @EnvironmentObject private var rulesStore: RulesStore
     @Environment(\.dismiss) private var dismiss
 
+    /// True when pushed inside Settings' navigation stack (no own stack or Done button).
+    var embedded = false
+
     var body: some View {
-        NavigationStack {
+        if embedded {
+            content
+        } else {
+            NavigationStack {
+                content.toolbar { Button("Done") { dismiss() } }
+            }
+        }
+    }
+
+    private var content: some View {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
@@ -49,8 +61,7 @@ struct StatsView: View {
                 }
             }
             .navigationTitle("Your stats")
-            .toolbar { Button("Done") { dismiss() } }
-        }
+            .navigationBarTitleDisplayMode(.inline)
     }
 
     private func saved(_ blocked: Int) -> Int {

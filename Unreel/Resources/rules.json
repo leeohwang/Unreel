@@ -1,20 +1,85 @@
 {
-  "version": 1,
+  "version": 6,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
-    { "pattern": "^/reels?(/|$)", "kind": "reels" },
-    { "pattern": "^/[^/]+/reels?(/|$)", "kind": "reels" },
-    { "pattern": "^/explore/?$", "kind": "explore", "redirect": "/explore/search/", "count": false },
-    { "pattern": "^/explore/(?!search)", "kind": "explore" },
-    { "pattern": "^/?$", "kind": "feed", "count": false }
+    {
+      "pattern": "^/reels(/|$)",
+      "kind": "reels"
+    },
+    {
+      "pattern": "^/[^/]+/reels/?$",
+      "kind": "reels"
+    },
+    {
+      "pattern": "^/([^/]+/)?reel/",
+      "kind": "reels",
+      "allowFrom": "^/direct/"
+    },
+    {
+      "pattern": "^/explore/?$",
+      "kind": "explore",
+      "redirect": "/explore/search/",
+      "count": false
+    },
+    {
+      "pattern": "^/explore/(?!search)",
+      "kind": "explore"
+    },
+    {
+      "pattern": "^/?$",
+      "kind": "feed",
+      "count": false
+    }
   ],
   "hideSelectors": [
     "a[href=\"/reels/\"]",
     "a[href$=\"/reels/\"]",
-    "a[href*=\"/reel/\"]"
+    "[data-visualcompletion=\"ignore-dynamic\"] > div:has(a[href=\"/reels/\"])"
   ],
   "feedSelectors": [
-    "a[href=\"/\"]"
-  ]
+    "a[href=\"/\"]",
+    "[data-visualcompletion=\"ignore-dynamic\"] > div:has(a[href=\"/\"])"
+  ],
+  "igBarLinks": [
+    "a[href=\"/explore/\"]",
+    "a[href=\"/direct/inbox/\"]"
+  ],
+  "extraCSS": "html[data-unreel-path^=\"/direct/\"] [role=\"navigation\"] > div { border-right-width: 0 !important; }\nhtml[data-unreel-path=\"/direct/inbox/\"] [role=\"navigation\"] [role=\"button\"]:has(svg:is([aria-label=\"Back\"],[aria-label=\"Atrás\"],[aria-label=\"Retour\"],[aria-label=\"Zurück\"],[aria-label=\"뒤로\"])) { visibility: hidden !important; pointer-events: none !important; }\nhtml[data-unreel-path=\"/\"] :is(header._ab15, header:has(svg[aria-label=\"Instagram\"])) { opacity: 0 !important; pointer-events: none !important; }\nhtml[data-unreel-path=\"/\"] nav:has(> div > :is(header._ab15, header:has(svg[aria-label=\"Instagram\"]))), html[data-unreel-path=\"/\"] nav:has(> div > :is(header._ab15, header:has(svg[aria-label=\"Instagram\"]))) > div { height: 0 !important; min-height: 0 !important; margin-top: 0 !important; overflow: visible !important; }",
+  "reelLinkSelectors": [
+    "a[href*=\"/reel/\"]"
+  ],
+  "filteredFeedSelectors": [
+    "article:has(a[href*=\"/reel/\"])",
+    "article:has(video)"
+  ],
+  "feedHideTextMarkers": [
+    "Suggested for you",
+    "Suggested posts",
+    "Sponsored",
+    "Sugerencias para ti",
+    "Publicidad",
+    "Suggestions pour vous",
+    "Sponsorisé",
+    "Vorschläge für dich",
+    "Gesponsert",
+    "회원님을 위한 추천",
+    "광고"
+  ],
+  "createLabels": {
+    "post": [
+      "Post",
+      "Publicación",
+      "Publication",
+      "Beitrag",
+      "게시물"
+    ],
+    "story": [
+      "Story",
+      "Historia",
+      "Story",
+      "Story",
+      "스토리"
+    ]
+  }
 }
