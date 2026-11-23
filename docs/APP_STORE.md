@@ -3,7 +3,7 @@
 ## Release checklist
 
 - [ ] Apple Developer Program membership active ($99/year)
-- [ ] Family Controls (Distribution) entitlement requested and granted for the app **and** its three extensions (com.leeohwang.unreel, .shield, .shieldaction, .monitor): developer.apple.com/contact/request/family-controls-distribution. Approval can take days to weeks; without it the Screen Time lock only works in development builds. If it's not granted in time, ship v1 with the lock hidden and add it in v1.1.
+- [ ] Family Controls (Distribution) entitlement requested and granted for the app **and** its three extensions (com.leeohwang.unreelapp, .shield, .shieldaction, .monitor): developer.apple.com/contact/request/family-controls-distribution. Approval can take days to weeks; without it the Screen Time lock only works in development builds. If it's not granted in time, ship v1 with the lock hidden and add it in v1.1.
 - [ ] App Group `group.com.leeohwang.unreel` registered, and all four bundle IDs have it plus Family Controls enabled
 - [ ] Real iPhone: lock Instagram in Settings > Screen Time, check its notifications still arrive, the shield's "Open Unreel" opens your messages, and a posting pass lifts the lock for 5 minutes
 - [ ] Bundle ID registered and app created in App Store Connect (name must not contain "Instagram"/"Insta")

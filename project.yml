@@ -75,10 +75,10 @@ targets:
         UIBackgroundModes:
           - fetch
         BGTaskSchedulerPermittedIdentifiers:
-          - com.leeohwang.unreel.messagecheck
+          - com.leeohwang.unreelapp.messagecheck
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
@@ -98,7 +98,7 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldConfigurationExtension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.shield
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.shield
 
   # What the shield's buttons do ("Open Unreel", posting pass).
   UnreelShieldAction:
@@ -116,7 +116,7 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.shieldaction
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.shieldaction
 
   # Puts the lock back when a posting pass ends.
   UnreelMonitor:
@@ -134,4 +134,4 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ActivityMonitorExtension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel.monitor
+        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.monitor
