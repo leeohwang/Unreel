@@ -190,7 +190,8 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
     const pager = document.createElement('div');
     pager.id = 'overlay';
     pager.style.cssText = 'height:400px;overflow-y:scroll;scroll-snap-type:y mandatory';
-    pager.innerHTML = '<div><div data-reel-type="reshared" style="height:400px"><video id="o1"></video></div></div>' +
+    pager.innerHTML = '<div><div data-reel-type="reshared" style="height:400px"><video id="o1"></video>' +
+      '<div id="clipbox" style="overflow:hidden;width:50px"><div role="button"><svg aria-label="Comment"></svg></div></div></div></div>' +
       '<div><div id="sugg1" data-reel-type="suggested" style="height:400px"><video id="o2"></video></div></div>' +
       '<div id="other" data-reel-type="other" style="height:400px"><video id="o3"></video></div><div style="height:800px"></div>';
     document.body.prepend(pager);
@@ -198,6 +199,7 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   await settle(page);
   assert.ok(await page.$eval('#sugg1', el => getComputedStyle(el).visibility === 'hidden'), 'overlay: suggested Reels blanked');
   assert.strictEqual(await page.$eval('#overlay', el => getComputedStyle(el).overflowY), 'hidden', 'overlay: viewer scroller locked');
+  assert.strictEqual(await page.$eval('#clipbox', el => getComputedStyle(el).overflowX), 'visible', 'overlay: shared Reel buttons not clipped');
   await page.evaluate(() => { document.getElementById('overlay').scrollTop = 400; });
   await page.waitForTimeout(300);
   assert.strictEqual(await page.$eval('#overlay', el => el.scrollTop), 0, 'overlay: swipe goes back to the shared Reel');

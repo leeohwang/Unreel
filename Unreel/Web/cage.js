@@ -44,8 +44,16 @@
   // Lock that viewer's scroller and blank the suggested ones. They keep their
   // size: collapsed, Instagram's "load more" trigger stays on screen and it
   // keeps fetching Reels in the background.
+  // Instagram puts the Reel's buttons (like, comment, share, more) outside a
+  // narrower overflow:hidden box. They still show, but WebKit drops taps on
+  // them, so let the boxes around the buttons overflow.
+  var reelButtonLabels = ['Comment', 'Share', 'Comentar', 'Compartir', 'Commenter', 'Partager',
+    'Kommentieren', 'Teilen', '댓글 달기', '공유하기', '공유'];
   var sharedReelCSS = ':has(> div > [data-reel-type="reshared"]) { overflow: hidden !important; }\n' +
-    '[data-reel-type="suggested"] { visibility: hidden !important; pointer-events: none !important; }\n';
+    '[data-reel-type="suggested"] { visibility: hidden !important; pointer-events: none !important; }\n' +
+    '[data-reel-type="reshared"] div:has(' + reelButtonLabels.map(function (l) {
+      return 'svg[aria-label="' + l + '"]';
+    }).join(', ') + ') { overflow: visible !important; }\n';
 
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
