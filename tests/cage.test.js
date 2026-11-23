@@ -150,6 +150,37 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
   await settle(page);
   assert.strictEqual(pathOf(page), '/direct/inbox/', 'Reel opened from elsewhere is blocked');
 
+  // Instagram's viewer can move to the next Reel without changing the URL.
+  for (const how of ['video', 'swipe']) {
+    page = await makePage(browser, true);
+    await page.goto('https://www.instagram.com/direct/t/123/');
+    await settle(page);
+    await page.evaluate(() => history.pushState({}, '', '/reel/abc/'));
+    await settle(page);
+    page.msgs = [];
+    await page.evaluate(() => {
+      const pager = document.createElement('div');
+      pager.id = 'pager';
+      pager.style.cssText = 'height:400px;overflow-y:scroll;scroll-snap-type:y mandatory';
+      pager.innerHTML = '<video id="v1" style="display:block;height:400px"></video><video id="v2" style="display:block;height:400px"></video><div style="height:800px"></div>';
+      document.body.prepend(pager);
+      document.getElementById('v1').dispatchEvent(new Event('play'));
+    });
+    await page.waitForTimeout(100);
+    assert.strictEqual(blocks(page).length, 0, how + ': the shared Reel itself plays');
+    if (how === 'video') {
+      await page.evaluate(() => document.getElementById('v2').dispatchEvent(new Event('play')));
+    } else {
+      await page.evaluate(() => { document.getElementById('pager').scrollTop = 10; });
+      await page.waitForTimeout(100);
+      await page.evaluate(() => { document.getElementById('pager').scrollTop = 400; });
+    }
+    await page.waitForTimeout(300);
+    assert.strictEqual(pathOf(page), '/direct/t/123/', how + ': next Reel without a URL change goes back to the chat');
+    assert.strictEqual(blocks(page).filter(m => m.count).length, 1, how + ': counted once');
+    await page.waitForTimeout(3500);
+  }
+
   page = await makePage(browser, true, null, false);
   await page.goto('https://www.instagram.com/direct/t/123/');
   await settle(page);

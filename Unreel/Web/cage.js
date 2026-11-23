@@ -140,14 +140,12 @@
         if (from && lastAllowedPath && from.test(lastAllowedPath)) {
           reelOrigin = lastAllowedPath;
           lastAllowedPath = path;
+          reelVideo = null;
+          snapStart = null;
           return;
         }
         if (reelOrigin) {
-          post({ type: 'blocked', kind: r.kind, count: r.count !== false });
-          var back = reelOrigin;
-          reelOrigin = null;
-          lastPath = null;
-          navigate(back);
+          leaveSharedReel(r.count !== false);
           return;
         }
       }
@@ -164,6 +162,46 @@
     lastAllowedPath = path;
     if (!/^\/([^/]+\/)?reel\//.test(path)) reelOrigin = null;
   }
+
+  function leaveSharedReel(count) {
+    post({ type: 'blocked', kind: 'reels', count: count });
+    var back = reelOrigin;
+    reelOrigin = null;
+    reelVideo = null;
+    snapStart = null;
+    lastPath = null;
+    navigate(back);
+  }
+
+  function onSharedReel() {
+    return !!reelOrigin && /^\/([^/]+\/)?reel\//.test(location.pathname);
+  }
+
+  // Instagram's Reel viewer can move on to more Reels without changing the URL,
+  // so on a Reel opened from a chat, watch the page itself too:
+  // - a second, different video starting to play, or
+  // - a swipe of most of a screen in a snapping (Reels-style) scroller
+  // both mean "the next Reel", which sends you back to the chat.
+  var reelVideo = null, reelVideoSrc = '', snapStart = null;
+  document.addEventListener('play', function (e) {
+    var v = e.target;
+    if (!v || v.tagName !== 'VIDEO' || !onSharedReel()) return;
+    var src = v.currentSrc || v.src || '';
+    if (!reelVideo) { reelVideo = v; reelVideoSrc = src; return; }
+    if (v === reelVideo && (!src || !reelVideoSrc || src === reelVideoSrc)) return;
+    try { v.pause(); } catch (err) {}
+    leaveSharedReel(true);
+  }, true);
+  document.addEventListener('scroll', function (e) {
+    if (!onSharedReel()) return;
+    var el = e.target === document ? document.scrollingElement : e.target;
+    if (!el || el.nodeType !== 1) return;
+    var snap = getComputedStyle(el).scrollSnapType;
+    if (!snap || snap === 'none') return;
+    if (!snapStart || snapStart.el !== el) { snapStart = { el: el, top: el.scrollTop, left: el.scrollLeft }; return; }
+    var moved = Math.max(Math.abs(el.scrollTop - snapStart.top), Math.abs(el.scrollLeft - snapStart.left));
+    if (moved > Math.min(el.clientHeight, innerHeight) * 0.5) leaveSharedReel(true);
+  }, true);
 
   // More than 8 redirects in 20 s.
   function tooManyRedirects() {
