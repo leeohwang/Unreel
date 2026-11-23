@@ -86,3 +86,17 @@
 "Open Unreel" = "Unreel 열기";
 "Post something (%lld min)" = "게시하기 (%lld분)";
 "Tap to see your messages." = "탭하여 메시지를 확인하세요.";
+
+/* Message alerts */
+"Message alerts" = "메시지 알림";
+"Alert me about new messages" = "새 메시지 알림 받기";
+"Background App Refresh is off for Unreel, so it can't check. Turn it on in the Settings app under General > Background App Refresh." = "Unreel의 백그라운드 앱 새로 고침이 꺼져 있어 확인할 수 없습니다. 설정 > 일반 > 백그라운드 앱 새로 고침에서 켜세요.";
+"Last checked" = "마지막 확인";
+"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel은 iOS가 백그라운드 실행을 허용할 때 메시지를 확인하므로 알림이 1시간 이상 늦을 수 있고, Unreel을 쓸어 넘겨 종료하면 멈춥니다. 확인은 이 iPhone에서 이루어지며 어디에도 전송되지 않습니다. 즉시 알림을 받으려면 Instagram 앱을 유지하고 아래 스크린 타임으로 잠그세요.";
+"Notifications are off for Unreel" = "Unreel의 알림이 꺼져 있습니다";
+"Open Settings" = "설정 열기";
+"Cancel" = "취소";
+"Allow notifications for Unreel in the Settings app to get message alerts." = "메시지 알림을 받으려면 설정에서 Unreel의 알림을 허용하세요.";
+"Sent you a message" = "메시지를 보냈습니다";
+"New messages" = "새 메시지";
+"You have %lld unread chats" = "읽지 않은 채팅 %lld개";

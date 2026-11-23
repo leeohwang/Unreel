@@ -35,6 +35,8 @@ struct Rules: Codable, Equatable {
     var feedHideTextMarkers: [String]?
     /// Instagram's create-menu labels ("Post", "Story") in the languages we know.
     var createLabels: [String: [String]]?
+    /// How to read unread chats off Instagram's inbox page, for message alerts. Optional.
+    var inbox: InboxRules?
 
     /// The first rule that blocks this path, honoring the settings and, for rules
     /// with `allowFrom`, the page the user is coming from.
@@ -64,26 +66,56 @@ struct Rules: Codable, Equatable {
     }()
 }
 
+/// Selectors inbox-probe.js uses to find unread chats on /direct/inbox/.
+struct InboxRules: Codable, Equatable {
+    /// The chat list. The probe waits for one of these before reading.
+    var listSelectors: [String]
+    /// One chat row each.
+    var rowSelectors: [String]
+    /// A row holding one of these is unread (Instagram's blue dot).
+    var unreadSelectors: [String]
+    /// The unread count on the Messages icon, if the page shows one.
+    var badgeSelectors: [String]
+    /// The sender's name inside a row: the first match with text.
+    var nameSelectors: [String]
+    /// Treat a row whose last-message line is bold as unread.
+    var boldPreviewMeansUnread: Bool?
+
+    static let fallback = InboxRules(
+        listSelectors: ["[aria-label=\"Thread list\"]", "div[role=\"list\"]"],
+        rowSelectors: ["[role=\"listitem\"]", "a[href^=\"/direct/t/\"]", "div[role=\"button\"]"],
+        unreadSelectors: ["[aria-label=\"Unread\"]"],
+        badgeSelectors: [],
+        nameSelectors: ["span[dir=\"auto\"]", "span"],
+        boldPreviewMeansUnread: true)
+}
+
 /// Loads blocking rules: bundled defaults, overridden by a newer remote copy.
 @MainActor
 final class RulesStore: ObservableObject {
     @Published private(set) var rules: Rules
     private var lastFetch: Date?
 
-    private static var cacheURL: URL {
+    nonisolated private static var cacheURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("rules.json")
     }
 
     init() {
+        rules = Self.saved()
+    }
+
+    /// The newest rules on the phone (bundled, or a newer downloaded copy).
+    /// Also used by the background message check, which runs without the UI.
+    nonisolated static func saved() -> Rules {
         var current = Rules.bundled
-        if let data = try? Data(contentsOf: Self.cacheURL),
+        if let data = try? Data(contentsOf: cacheURL),
            let cached = try? JSONDecoder().decode(Rules.self, from: data),
            cached.version > current.version {
             current = cached
         }
-        rules = current
+        return current
     }
 
     /// Fetches the remote rules each time the app comes to the foreground (at most

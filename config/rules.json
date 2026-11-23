@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -81,5 +81,31 @@
       "Story",
       "스토리"
     ]
+  },
+  "inbox": {
+    "listSelectors": [
+      "[aria-label=\"Thread list\"]",
+      "[aria-label=\"Chats\"]",
+      "div[role=\"list\"]"
+    ],
+    "rowSelectors": [
+      "[role=\"listitem\"]",
+      "a[href^=\"/direct/t/\"]",
+      "div[role=\"button\"]"
+    ],
+    "unreadSelectors": [
+      "[aria-label=\"Unread\"]",
+      "[aria-label*=\"unread\" i]",
+      "[data-unread=\"true\"]"
+    ],
+    "badgeSelectors": [
+      "a[href^=\"/direct/inbox\"] [aria-label*=\"unread\" i]",
+      "a[href^=\"/direct/inbox\"] span"
+    ],
+    "nameSelectors": [
+      "span[dir=\"auto\"]",
+      "span"
+    ],
+    "boldPreviewMeansUnread": true
   }
 }
