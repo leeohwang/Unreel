@@ -80,6 +80,9 @@ struct InboxRules: Codable, Equatable {
     var nameSelectors: [String]
     /// Treat a row whose last-message line is bold as unread.
     var boldPreviewMeansUnread: Bool?
+    /// A row with a piece of text that is exactly one of these is unread. Instagram puts
+    /// a hidden "Unread" label next to its blue dot (localized, so several languages).
+    var unreadTexts: [String]?
 
     /// Used if the rules have no "inbox" section. Instagram's mobile inbox (Nov 2026): the chat
     /// list sits in div[role="navigation"]; each chat is a div[role="button"] with a time (<abbr>),
@@ -90,7 +93,8 @@ struct InboxRules: Codable, Equatable {
         unreadSelectors: ["[aria-label=\"Unread\"]"],
         badgeSelectors: [],
         nameSelectors: ["span[dir=\"auto\"]", "span"],
-        boldPreviewMeansUnread: true)
+        boldPreviewMeansUnread: true,
+        unreadTexts: ["Unread"])
 }
 
 /// Loads blocking rules: bundled defaults, overridden by a newer remote copy.

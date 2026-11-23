@@ -58,9 +58,10 @@
       if (parts.length === 0) continue;
       const nameEl = firstMatch(cfg.nameSelectors, row);
       const name = text(nameEl) || parts[0].text;
-      const rest = parts.filter((p) => p.text !== name);
+      const rest = parts.filter((p) => p.text !== name && !(cfg.unreadTexts || []).includes(p.text));
       const preview = rest.length ? rest[0] : null;
-      const marked = all(cfg.unreadSelectors, row).length > 0;
+      const marked = all(cfg.unreadSelectors, row).length > 0 ||
+        parts.some((p) => (cfg.unreadTexts || []).includes(p.text));
       const bold = !!(cfg.boldPreviewMeansUnread && preview && preview.weight >= 600);
       if (!marked && !bold) continue;
       threads.push({ id: threadId(row), name: name.slice(0, 80), preview: preview ? preview.text.slice(0, 140) : null });

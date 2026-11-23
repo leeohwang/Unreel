@@ -104,6 +104,13 @@
       "span[dir=\"auto\"]",
       "span"
     ],
-    "boldPreviewMeansUnread": true
+    "boldPreviewMeansUnread": true,
+    "unreadTexts": [
+      "Unread",
+      "No leído",
+      "Non lu",
+      "Ungelesen",
+      "읽지 않음"
+    ]
   }
 }

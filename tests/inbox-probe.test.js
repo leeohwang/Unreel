@@ -15,6 +15,7 @@ const row = (name, preview, unread) => `
     <span dir="auto"><span style="font-weight:${unread ? 600 : 400}">${name}</span></span>
     <span dir="auto"><span style="font-weight:${unread ? 600 : 400}">${preview}</span></span>
     <span>·</span><span dir="auto"><abbr aria-label="2 hours ago"><span>2h</span></abbr></span>
+    ${unread ? '<div>Unread</div>' : ''}
   </div>`;
 const chrome = `<div role="button"><h2 dir="auto"><span style="font-weight:700">me</span></h2></div>
   <a role="link" href="/direct/new/"></a>
@@ -64,8 +65,12 @@ async function run(browser, startPath, extra = {}) {
     console.log('ok  reads unread chats and skips header and notes buttons');
 
     r = await run(browser, '/direct/inbox/', { boldPreviewMeansUnread: false });
+    assert.deepStrictEqual(r.threads.map(t => t.name), ['Ana', 'Cy']);
+    console.log('ok  the "Unread" label alone marks a chat unread');
+
+    r = await run(browser, '/direct/inbox/', { boldPreviewMeansUnread: false, unreadTexts: [] });
     assert.deepStrictEqual(r.threads, []);
-    console.log('ok  without the bold rule nothing counts as unread');
+    console.log('ok  with neither signal nothing counts as unread');
 
     r = await run(browser, '/accounts/login/');
     assert.strictEqual(r.loggedIn, false);
