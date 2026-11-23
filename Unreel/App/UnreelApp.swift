@@ -16,7 +16,12 @@ struct UnreelApp: App {
                 .environmentObject(rules)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { MessageAlerts.schedule() }
+            if phase == .background {
+                MessageAlerts.schedule()
+                #if DEBUG
+                MessageAlerts.debugCheckInBackgroundIfAsked()
+                #endif
+            }
             guard phase == .active else { return }
             MessageAlerts.appBecameActive()
             LockModel.restoreOnLaunch()

@@ -157,10 +157,31 @@ enum MessageAlerts {
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
     }
 
-    private static func writeDebugNote(_ note: String) {
+    #if DEBUG
+    /// Debug: with `-UnreelCheckInBackground`, runs one real check 5 seconds after the app
+    /// goes to the background, with the app already backgrounded, to show the invisible web
+    /// view still loads and alerts there. (iOS's own refresh scheduling can only be seen on a device.)
+    static func debugCheckInBackgroundIfAsked() {
+        guard ProcessInfo.processInfo.arguments.contains("-UnreelCheckInBackground") else { return }
+        var taskID = UIBackgroundTaskIdentifier.invalid
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "debug-message-check") {
+            UIApplication.shared.endBackgroundTask(taskID)
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            let ok = await check(debug: true)
+            writeDebugNote("background check finished, read page: \(ok), app state: \(UIApplication.shared.applicationState.rawValue) (2 = background)", append: true)
+            UIApplication.shared.endBackgroundTask(taskID)
+        }
+    }
+    #endif
+
+    private static func writeDebugNote(_ note: String, append: Bool = false) {
         #if DEBUG
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        try? "\(Date())\n\(note)\n".write(to: dir.appendingPathComponent("inbox-probe.txt"), atomically: true, encoding: .utf8)
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("inbox-probe.txt")
+        let old = append ? ((try? String(contentsOf: url, encoding: .utf8)) ?? "") + "\n" : ""
+        try? (old + "\(Date())\n\(note)\n").write(to: url, atomically: true, encoding: .utf8)
         #endif
     }
 
