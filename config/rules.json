@@ -84,23 +84,21 @@
   },
   "inbox": {
     "listSelectors": [
+      "div[role=\"navigation\"]:has(abbr)",
       "[aria-label=\"Thread list\"]",
-      "[aria-label=\"Chats\"]",
       "div[role=\"list\"]"
     ],
     "rowSelectors": [
-      "[role=\"listitem\"]",
-      "a[href^=\"/direct/t/\"]",
-      "div[role=\"button\"]"
+      "div[role=\"button\"]:has(abbr)",
+      "a[href^=\"/direct/t/\"]:has(abbr)",
+      "[role=\"listitem\"]:has(abbr)"
     ],
     "unreadSelectors": [
       "[aria-label=\"Unread\"]",
-      "[aria-label*=\"unread\" i]",
-      "[data-unread=\"true\"]"
+      "[aria-label*=\"unread\" i]"
     ],
     "badgeSelectors": [
-      "a[href^=\"/direct/inbox\"] [aria-label*=\"unread\" i]",
-      "a[href^=\"/direct/inbox\"] span"
+      "a[href^=\"/direct/inbox\"] [aria-label*=\"unread\" i]"
     ],
     "nameSelectors": [
       "span[dir=\"auto\"]",

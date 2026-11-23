@@ -109,6 +109,9 @@ final class InboxProbe: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
               var options = try? JSONSerialization.jsonObject(with: JSONEncoder().encode(rules)) as? [String: Any]
         else { return nil }
         options["waitMs"] = max(5000, waitMs)
+        // The page can take a while to reach document-end, so also give the script an
+        // absolute deadline that lands before our own timeout fires.
+        options["deadline"] = Int(Date().timeIntervalSince1970 * 1000) + max(5000, waitMs)
         options["settleMs"] = 1500
         options["debug"] = debug
         guard let json = try? JSONSerialization.data(withJSONObject: options),

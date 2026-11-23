@@ -79,14 +79,17 @@
 
   // A short outline of the chat list, so a debug run shows what Instagram's page looks like now.
   function outline(root) {
+    const skip = new Set(["SCRIPT", "STYLE", "LINK", "NOSCRIPT", "META", "svg", "SVG", "path"]);
     const lines = [];
-    (function walk(el, depth) {
-      if (lines.length > 250 || depth > 14) return;
+    // Depth only grows for elements that get a line, so Instagram's deep wrapper divs don't hide the content.
+    (function walk(el, depth, hops) {
+      if (lines.length > 400 || hops > 80 || skip.has(el.tagName)) return;
       const attrs = ["role", "aria-label", "href", "dir"].map((a) => el.getAttribute && el.getAttribute(a) ? `${a}="${el.getAttribute(a).slice(0, 40)}"` : "").filter(Boolean).join(" ");
       const own = Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.nodeValue.trim()).join(" ").slice(0, 40);
-      if (attrs || own) lines.push(`${"  ".repeat(depth)}<${el.tagName.toLowerCase()} ${attrs}> ${own}${own ? ` [w${weight(el)}]` : ""}`);
-      for (const child of el.children) walk(child, depth + 1);
-    })(root, 0);
+      const shown = !!(attrs || own);
+      if (shown) lines.push(`${"  ".repeat(Math.min(depth, 20))}<${el.tagName.toLowerCase()} ${attrs}> ${own}${own ? ` [w${weight(el)}]` : ""}`);
+      for (const child of el.children) walk(child, depth + (shown ? 1 : 0), hops + 1);
+    })(root, 0, 0);
     return lines.join("\n");
   }
 
@@ -117,7 +120,7 @@
     if (hasRows && !listSeenAt) listSeenAt = Date.now();
     // Give the list a moment to fill in after it first shows.
     if (listSeenAt && Date.now() - listSeenAt > cfg.settleMs) return finish(list);
-    if (Date.now() - started > cfg.waitMs) return finish(list);
+    if (Date.now() - started > cfg.waitMs || (cfg.deadline && Date.now() > cfg.deadline)) return finish(list);
     setTimeout(poll, 250);
   })();
 })();

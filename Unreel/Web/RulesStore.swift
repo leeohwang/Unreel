@@ -81,9 +81,12 @@ struct InboxRules: Codable, Equatable {
     /// Treat a row whose last-message line is bold as unread.
     var boldPreviewMeansUnread: Bool?
 
+    /// Used if the rules have no "inbox" section. Instagram's mobile inbox (Nov 2026): the chat
+    /// list sits in div[role="navigation"]; each chat is a div[role="button"] with a time (<abbr>),
+    /// which the header and notes buttons don't have.
     static let fallback = InboxRules(
-        listSelectors: ["[aria-label=\"Thread list\"]", "div[role=\"list\"]"],
-        rowSelectors: ["[role=\"listitem\"]", "a[href^=\"/direct/t/\"]", "div[role=\"button\"]"],
+        listSelectors: ["div[role=\"navigation\"]:has(abbr)", "[aria-label=\"Thread list\"]"],
+        rowSelectors: ["div[role=\"button\"]:has(abbr)", "a[href^=\"/direct/t/\"]:has(abbr)"],
         unreadSelectors: ["[aria-label=\"Unread\"]"],
         badgeSelectors: [],
         nameSelectors: ["span[dir=\"auto\"]", "span"],

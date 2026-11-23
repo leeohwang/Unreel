@@ -14,7 +14,7 @@ import UserNotifications
 /// Nothing is sent anywhere: what we've alerted about is kept on the phone only.
 @MainActor
 enum MessageAlerts {
-    static let taskID = "com.leeohwang.unreel.messagecheck"
+    nonisolated static let taskID = "com.leeohwang.unreel.messagecheck"
 
     private static let defaults = UserDefaults.standard
     private enum Keys {
@@ -89,10 +89,13 @@ enum MessageAlerts {
 
     /// Reads the inbox and posts alerts. Returns whether the page could be read.
     @discardableResult
-    static func check(using probe: InboxProbe = InboxProbe(), debug: Bool = false) async -> Bool {
+    static func check(using probe: InboxProbe? = nil, debug: Bool = false) async -> Bool {
         guard isEnabled || debug else { return false }
+        // Default arguments are evaluated outside the main actor, so make the probe here.
+        let probe = probe ?? InboxProbe()
         let rules = RulesStore.saved().inbox ?? .fallback
-        guard let result = await probe.run(rules: rules, debug: debug) else {
+        guard let result = await probe.run(rules: rules, timeout: debug ? 60 : 25, debug: debug) else {
+            if debug { writeDebugNote("probe returned nil (timed out, page failed to load, or result didn't decode)") }
             Analytics.breakage("inbox-timeout", rulesVersion: RulesStore.saved().version)
             return false
         }
@@ -152,6 +155,13 @@ enum MessageAlerts {
         content.sound = .default
         let id = "message-" + (chat?.id ?? chat?.name ?? "count") + "-\(Int(Date().timeIntervalSince1970))"
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
+    }
+
+    private static func writeDebugNote(_ note: String) {
+        #if DEBUG
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try? "\(Date())\n\(note)\n".write(to: dir.appendingPathComponent("inbox-probe.txt"), atomically: true, encoding: .utf8)
+        #endif
     }
 
     /// Debug builds: what the last check saw, so the selectors can be tuned.

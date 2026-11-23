@@ -8,19 +8,24 @@ const assert = require('assert');
 const probe = fs.readFileSync(path.join(__dirname, '../Unreel/Web/inbox-probe.js'), 'utf8');
 const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/rules.json'), 'utf8'));
 
-const row = (id, name, preview, unread) => `
-  <div role="listitem"><a href="/direct/t/${id}/" role="link">
-    <span dir="auto" style="font-weight:600">${name}</span>
-    <span dir="auto" style="font-weight:${unread ? 700 : 400}">${preview}</span>
-    ${unread ? '<div aria-label="Unread"></div>' : ''}
-  </a></div>`;
+// Shaped like Instagram's mobile inbox (Nov 2026): rows are div[role=button] with an <abbr> time,
+// inside div[role=navigation] next to header and notes buttons that must not count.
+const row = (name, preview, unread) => `
+  <div role="button">
+    <span dir="auto"><span style="font-weight:${unread ? 600 : 400}">${name}</span></span>
+    <span dir="auto"><span style="font-weight:${unread ? 600 : 400}">${preview}</span></span>
+    <span>·</span><span dir="auto"><abbr aria-label="2 hours ago"><span>2h</span></abbr></span>
+  </div>`;
+const chrome = `<div role="button"><h2 dir="auto"><span style="font-weight:700">me</span></h2></div>
+  <a role="link" href="/direct/new/"></a>
+  <div role="presentation"><div role="button"><div>Weekend plans?</div><span dir="auto">Your note</span></div></div>
+  <h1 dir="auto" style="font-weight:700">Messages</h1><a role="link" href="/direct/requests/">Requests</a>`;
 
 const pages = {
   '/direct/inbox/': `<!doctype html><title>(2) Inbox • Direct</title><body>
-    <a href="/direct/inbox/"><span>2</span></a>
     <div id="later"></div>
-    <script>setTimeout(() => { document.getElementById('later').innerHTML = '<div aria-label="Thread list">' +
-      ${JSON.stringify(row('111', 'Ana', 'see you at 6', true) + row('222', 'Ben', 'ok', false) + row('333', 'Cy', 'lol', true))} + '</div>'; }, 600);</script>`,
+    <script>setTimeout(() => { document.getElementById('later').innerHTML = '<div role="navigation">' +
+      ${JSON.stringify(chrome + row('Ana', 'see you at 6', true) + row('Ben', 'ok', false) + row('Cy', 'lol', true))} + '</div>'; }, 600);</script>`,
   '/accounts/login/': `<!doctype html><title>Login</title><body><form></form>`,
 };
 
@@ -51,23 +56,23 @@ async function run(browser, startPath, extra = {}) {
     assert.strictEqual(r.listFound, true);
     assert.strictEqual(r.rowCount, 3);
     assert.strictEqual(r.titleCount, 2);
-    assert.strictEqual(r.badgeCount, 2);
+    assert.strictEqual(r.badgeCount, null);
     assert.deepStrictEqual(r.threads, [
-      { id: '111', name: 'Ana', preview: 'see you at 6' },
-      { id: '333', name: 'Cy', preview: 'lol' },
+      { id: null, name: 'Ana', preview: 'see you at 6' },
+      { id: null, name: 'Cy', preview: 'lol' },
     ]);
-    console.log('ok  reads unread chats, title and badge counts');
+    console.log('ok  reads unread chats and skips header and notes buttons');
 
-    r = await run(browser, '/direct/inbox/', { unreadSelectors: [], boldPreviewMeansUnread: true });
-    assert.deepStrictEqual(r.threads.map(t => t.id), ['111', '333']);
-    console.log('ok  bold last message alone marks a chat unread');
+    r = await run(browser, '/direct/inbox/', { boldPreviewMeansUnread: false });
+    assert.deepStrictEqual(r.threads, []);
+    console.log('ok  without the bold rule nothing counts as unread');
 
     r = await run(browser, '/accounts/login/');
     assert.strictEqual(r.loggedIn, false);
     console.log('ok  logged out is reported, not an empty inbox');
 
     r = await run(browser, '/direct/inbox/', { debug: true });
-    assert.ok(r.outline.includes('aria-label="Thread list"'));
+    assert.ok(r.outline.includes('Ana'));
     console.log('ok  debug outline');
   } finally {
     await browser.close();
