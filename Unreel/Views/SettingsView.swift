@@ -46,6 +46,8 @@ struct SettingsView: View {
                     Text("After this much time in the app each day, you'll see a reminder to stop.")
                 }
 
+                MessageAlertsSection()
+
                 LockSection()
 
                 Section {

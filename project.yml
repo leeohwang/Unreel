@@ -71,6 +71,11 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # Message alerts: a best-effort inbox check when iOS allows (see MessageAlerts.swift).
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.leeohwang.unreel.messagecheck
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreel

@@ -10,6 +10,8 @@ Unreel is a free app that shows the Instagram website with Reels and Explore blo
 
 **Your Instagram account.** You log in to Instagram directly on Instagram's own website inside the app. Unreel never sees, stores or sends your password, messages, posts or anything else from your account. Your login session is kept by iOS in the app's web view on your device, and you can clear it with Settings > Log out of Instagram.
 
+**Message alerts (optional, off by default).** If you turn on message alerts, Unreel opens your Instagram inbox page in the background on your iPhone, reads which chats are unread, and shows a notification with the sender's name and the start of their latest message. This happens only on your device. Unreel keeps a short list of the chats it has already alerted you about on your iPhone, so it doesn't alert twice, and sends none of it anywhere.
+
 **Stats on your device.** Unreel counts how many times it blocked Reels or Explore and how long you use the app each day. These counts are stored only on your iPhone.
 
 **Anonymous usage statistics.** If "Share anonymous stats" is on (you can turn it off in Settings), the app sends at most one summary per day to TelemetryDeck, a privacy-focused analytics service. The summary contains only numbers such as how many Reels were blocked and minutes spent in the app, plus basic app and system information (app version, iOS version). It contains no name, email, Instagram account, content, advertising ID or location, and it is not linked to your identity. TelemetryDeck's privacy policy: https://telemetrydeck.com/privacy

@@ -86,3 +86,17 @@
 "Open Unreel" = "Unreel öffnen";
 "Post something (%lld min)" = "Etwas posten (%lld Min.)";
 "Tap to see your messages." = "Tippe, um deine Nachrichten zu sehen.";
+
+/* Message alerts */
+"Message alerts" = "Nachrichten-Hinweise";
+"Alert me about new messages" = "Bei neuen Nachrichten benachrichtigen";
+"Background App Refresh is off for Unreel, so it can't check. Turn it on in the Settings app under General > Background App Refresh." = "Die Hintergrundaktualisierung ist für Unreel aus, daher kann es nicht nachsehen. Schalte sie in den Einstellungen unter Allgemein > Hintergrundaktualisierung ein.";
+"Last checked" = "Zuletzt geprüft";
+"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel sieht nach deinen Nachrichten, wenn iOS es im Hintergrund laufen lässt. Hinweise können daher eine Stunde oder mehr zu spät kommen und hören auf, wenn du Unreel wegwischst. Die Prüfung läuft auf diesem iPhone; nichts wird irgendwohin gesendet. Für sofortige Hinweise behalte die Instagram-App und sperre sie unten mit Bildschirmzeit.";
+"Notifications are off for Unreel" = "Mitteilungen sind für Unreel aus";
+"Open Settings" = "Einstellungen öffnen";
+"Cancel" = "Abbrechen";
+"Allow notifications for Unreel in the Settings app to get message alerts." = "Erlaube Mitteilungen für Unreel in den Einstellungen, um Nachrichten-Hinweise zu bekommen.";
+"Sent you a message" = "Hat dir eine Nachricht gesendet";
+"New messages" = "Neue Nachrichten";
+"You have %lld unread chats" = "Du hast %lld ungelesene Chats";

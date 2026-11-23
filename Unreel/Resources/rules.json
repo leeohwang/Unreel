@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "redirectPath": "/direct/inbox/",
   "minutesPerBlockedVisit": 2,
   "blockedPaths": [
@@ -80,6 +80,37 @@
       "Story",
       "Story",
       "스토리"
+    ]
+  },
+  "inbox": {
+    "listSelectors": [
+      "div[role=\"navigation\"]:has(abbr)",
+      "[aria-label=\"Thread list\"]",
+      "div[role=\"list\"]"
+    ],
+    "rowSelectors": [
+      "div[role=\"button\"]:has(abbr)",
+      "a[href^=\"/direct/t/\"]:has(abbr)",
+      "[role=\"listitem\"]:has(abbr)"
+    ],
+    "unreadSelectors": [
+      "[aria-label=\"Unread\"]",
+      "[aria-label*=\"unread\" i]"
+    ],
+    "badgeSelectors": [
+      "a[href^=\"/direct/inbox\"] [aria-label*=\"unread\" i]"
+    ],
+    "nameSelectors": [
+      "span[dir=\"auto\"]",
+      "span"
+    ],
+    "boldPreviewMeansUnread": true,
+    "unreadTexts": [
+      "Unread",
+      "No leído",
+      "Non lu",
+      "Ungelesen",
+      "읽지 않음"
     ]
   }
 }

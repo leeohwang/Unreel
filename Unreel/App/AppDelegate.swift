@@ -2,11 +2,23 @@ import SwiftUI
 import UserNotifications
 
 /// Opens Unreel on the right page when one of its notifications is tapped
-/// (the Screen Time shield's "Open Unreel" button posts one that points at your messages).
+/// (message alerts, and the Screen Time shield's "Open Unreel" button, point at your messages).
+/// Also registers the background message check.
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        MessageAlerts.register()
+        #if DEBUG
+        // Debug: `-UnreelCheckMessages` runs one message check right after launch and writes
+        // what it saw to Documents/inbox-probe.txt (see MessageAlerts.writeDebugDump).
+        if ProcessInfo.processInfo.arguments.contains("-UnreelCheckMessages") {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(3))
+                await MessageAlerts.check(debug: true)
+            }
+        }
+        #endif
         return true
     }
 
