@@ -25,7 +25,7 @@ A free iPhone app that opens Instagram **without Reels, Explore or the endless f
 1. Install Xcode (free, Mac App Store) and XcodeGen: `brew install xcodegen`
 2. In this folder run `xcodegen` to create `Unreel.xcodeproj`, then open it.
 3. In **Signing & Capabilities**, pick your team. A free Apple ID works for running on your own iPhone; you need the paid Apple Developer Program ($99/year) to ship.
-4. If `com.leeohwang.unreel` is taken, change `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml` and re-run `xcodegen`.
+4. If `com.leeohwang.unreelapp` is taken, change `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml` and re-run `xcodegen`.
 5. Plug in your iPhone, select it, press Run. (First time: on the phone, Settings > General > VPN & Device Management > trust your developer certificate, and turn on Developer Mode.)
 
 ### Before shipping

@@ -14,7 +14,7 @@ import UserNotifications
 /// Nothing is sent anywhere: what we've alerted about is kept on the phone only.
 @MainActor
 enum MessageAlerts {
-    nonisolated static let taskID = "com.leeohwang.unreel.messagecheck"
+    nonisolated static let taskID = "com.leeohwang.unreelapp.messagecheck"
 
     private static let defaults = UserDefaults.standard
     private enum Keys {
@@ -191,7 +191,7 @@ enum MessageAlerts {
     }
 
     /// Debug builds: what the last check saw, so the selectors can be tuned.
-    /// Read it with `xcrun simctl get_app_container booted com.leeohwang.unreel data`.
+    /// Read it with `xcrun simctl get_app_container booted com.leeohwang.unreelapp data`.
     private static func writeDebugDump(_ result: InboxProbe.Result) {
         #if DEBUG
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
