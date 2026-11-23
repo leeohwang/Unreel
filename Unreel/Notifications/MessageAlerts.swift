@@ -114,12 +114,13 @@ enum MessageAlerts {
             return false
         }
         defaults.set(Date(), forKey: Keys.lastCheck)
-        await process(result)
+        await process(result, debug: debug)
         return true
     }
 
-    private static func process(_ result: InboxProbe.Result) async {
-        let isBaseline = !defaults.bool(forKey: Keys.hasBaseline)
+    private static func process(_ result: InboxProbe.Result, debug: Bool) async {
+        // Debug runs always alert, so a test right after turning alerts on shows a banner.
+        let isBaseline = !defaults.bool(forKey: Keys.hasBaseline) && !debug
         defaults.set(true, forKey: Keys.hasBaseline)
 
         var alerted = Set(defaults.stringArray(forKey: Keys.alerted) ?? [])
