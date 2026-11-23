@@ -39,6 +39,14 @@
     });
   }
 
+  // A Reel opened in a chat plays in a viewer over the chat (the URL stays
+  // /direct/t/...) that goes on to Instagram's suggested Reels when you swipe.
+  // Lock that viewer's scroller and blank the suggested ones. They keep their
+  // size: collapsed, Instagram's "load more" trigger stays on screen and it
+  // keeps fetching Reels in the background.
+  var sharedReelCSS = ':has(> div > [data-reel-type="reshared"]) { overflow: hidden !important; }\n' +
+    '[data-reel-type="suggested"] { visibility: hidden !important; pointer-events: none !important; }\n';
+
   function cssText() {
     var sels = (cfg.hideSelectors || []).slice();
     if (cfg.blockFeed) sels = sels.concat(cfg.feedSelectors || []);
@@ -47,7 +55,7 @@
     (cfg.reelLinkSelectors || []).forEach(function (sel) {
       sels.push(cfg.allowDmReels ? 'html:not([data-unreel-path^="/direct/"]) ' + sel : sel);
     });
-    return sels.join(',\n') + ' { display: none !important; }\n' + (cfg.extraCSS || '');
+    return sels.join(',\n') + ' { display: none !important; }\n' + sharedReelCSS + (cfg.extraCSS || '');
   }
 
   // Earlier builds learned a CSS rule that hid Instagram's bottom bar. The bar
@@ -201,6 +209,41 @@
     if (!snapStart || snapStart.el !== el) { snapStart = { el: el, top: el.scrollTop, left: el.scrollLeft }; return; }
     var moved = Math.max(Math.abs(el.scrollTop - snapStart.top), Math.abs(el.scrollLeft - snapStart.left));
     if (moved > Math.min(el.clientHeight, innerHeight) * 0.5) leaveSharedReel(true);
+  }, true);
+
+  // The same viewer, if Instagram renames that marker: on a chat page, a vertical
+  // swipe of most of a screen in a snapping scroller with videos goes back to
+  // the shared Reel (counted), and videos other than the shared one stay paused.
+  var dmSnapStart = typeof WeakMap === 'function' ? new WeakMap() : null, dmBlockedAt = 0;
+  function sharedItem(el) {
+    return el.querySelector('[data-reel-type="reshared"]');
+  }
+  document.addEventListener('scroll', function (e) {
+    if (!cfg.allowDmReels || !dmSnapStart || location.pathname.indexOf('/direct/') !== 0) return;
+    var el = e.target;
+    if (!el || el.nodeType !== 1 || !el.querySelector('video')) return;
+    var snap = getComputedStyle(el).scrollSnapType;
+    if (!snap || snap === 'none' || /^x\b|inline/.test(snap)) return;
+    var item = sharedItem(el), home;
+    if (item) home = item.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
+    else {
+      if (!dmSnapStart.has(el)) dmSnapStart.set(el, el.scrollTop);
+      home = dmSnapStart.get(el);
+    }
+    if (Math.abs(el.scrollTop - home) <= el.clientHeight * 0.5) return;
+    el.scrollTop = home;
+    var vids = el.querySelectorAll('video');
+    for (var i = 0; i < vids.length; i++) {
+      if (!item || !item.contains(vids[i])) { try { vids[i].pause(); } catch (err) {} }
+    }
+    var now = Date.now();
+    if (now - dmBlockedAt > 2000) { dmBlockedAt = now; post({ type: 'blocked', kind: 'reels', count: true }); }
+  }, true);
+  document.addEventListener('play', function (e) {
+    var v = e.target;
+    if (!cfg.allowDmReels || !v || v.tagName !== 'VIDEO' || location.pathname.indexOf('/direct/') !== 0) return;
+    var holder = v.closest && v.closest('[data-reel-type]');
+    if (holder && holder.getAttribute('data-reel-type') !== 'reshared') { try { v.pause(); } catch (err) {} }
   }, true);
 
   // More than 8 redirects in 20 s.

@@ -181,6 +181,32 @@ const hidden = (p, id) => p.$eval('#' + id, el => getComputedStyle(el).display =
     await page.waitForTimeout(3500);
   }
 
+  // Instagram's current viewer sits over the chat (the URL stays /direct/t/...).
+  page = await makePage(browser, true);
+  await page.goto('https://www.instagram.com/direct/t/123/');
+  await settle(page);
+  page.msgs = [];
+  await page.evaluate(() => {
+    const pager = document.createElement('div');
+    pager.id = 'overlay';
+    pager.style.cssText = 'height:400px;overflow-y:scroll;scroll-snap-type:y mandatory';
+    pager.innerHTML = '<div><div data-reel-type="reshared" style="height:400px"><video id="o1"></video></div></div>' +
+      '<div><div id="sugg1" data-reel-type="suggested" style="height:400px"><video id="o2"></video></div></div>' +
+      '<div id="other" data-reel-type="other" style="height:400px"><video id="o3"></video></div><div style="height:800px"></div>';
+    document.body.prepend(pager);
+  });
+  await settle(page);
+  assert.ok(await page.$eval('#sugg1', el => getComputedStyle(el).visibility === 'hidden'), 'overlay: suggested Reels blanked');
+  assert.strictEqual(await page.$eval('#overlay', el => getComputedStyle(el).overflowY), 'hidden', 'overlay: viewer scroller locked');
+  await page.evaluate(() => { document.getElementById('overlay').scrollTop = 400; });
+  await page.waitForTimeout(300);
+  assert.strictEqual(await page.$eval('#overlay', el => el.scrollTop), 0, 'overlay: swipe goes back to the shared Reel');
+  assert.strictEqual(pathOf(page), '/direct/t/123/', 'overlay: still in the chat');
+  assert.strictEqual(blocks(page).filter(m => m.count).length, 1, 'overlay: counted once');
+  await page.evaluate(() => { document.getElementById('overlay').scrollTop = 100; });
+  await page.waitForTimeout(300);
+  assert.strictEqual(await page.$eval('#overlay', el => el.scrollTop), 100, 'overlay: small moves (comments, bounce) allowed');
+
   page = await makePage(browser, true, null, false);
   await page.goto('https://www.instagram.com/direct/t/123/');
   await settle(page);
