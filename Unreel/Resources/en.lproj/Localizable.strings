@@ -107,3 +107,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "The last check couldn't load your inbox in time. It will try again.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram changed its inbox page. A fix will arrive automatically.";
 "Tap here to open Unreel." = "Tap here to open Unreel.";
+
+/* Setup guides */
+"How to set it up" = "How to set it up";
+"Set it up" = "Set it up";
+"Open Unreel from Instagram" = "Open Unreel from Instagram";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute.";
+"Open Shortcuts" = "Open Shortcuts";
+"Close" = "Close";
+"Step %lld" = "Step %lld";
+"Turn on the lock" = "Turn on the lock";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "In Unreel, tap ≡, then turn on Lock the Instagram app.";
+"Allow Screen Time" = "Allow Screen Time";
+"Tap Continue and confirm with Face ID or your passcode." = "Tap Continue and confirm with Face ID or your passcode.";
+"Pick Instagram" = "Pick Instagram";
+"Tick Instagram in the list, then tap Done." = "Tick Instagram in the list, then tap Done.";
+"That's it" = "That's it";
+"Opening Instagram now shows this screen. Tap Open Unreel, then the notification." = "Opening Instagram now shows this screen. Tap Open Unreel, then the notification.";
+"Go to the Automation tab and tap +." = "Go to the Automation tab and tap +.";
+"Choose App" = "Choose App";
+"Pick App from the list." = "Pick App from the list.";
+"Choose Instagram, Is Opened and Run Immediately. Tap Next." = "Choose Instagram, Is Opened and Run Immediately. Tap Next.";
+"Tap New Blank Automation, add Open App, choose Unreel, then Done." = "Tap New Blank Automation, add Open App, choose Unreel, then Done.";

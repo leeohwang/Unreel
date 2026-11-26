@@ -107,3 +107,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "La dernière vérification n'a pas pu charger vos messages à temps. Elle réessaiera.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram a modifié sa page de messages. Un correctif arrivera automatiquement.";
 "Tap here to open Unreel." = "Touchez ici pour ouvrir Unreel.";
+
+/* Setup guides */
+"How to set it up" = "Comment le configurer";
+"Set it up" = "Configurer";
+"Open Unreel from Instagram" = "Ouvrir Unreel depuis Instagram";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "Avec une automatisation Raccourcis, ouvrir Instagram ou toucher une de ses notifications vous amène directement dans Unreel. Une minute suffit.";
+"Open Shortcuts" = "Ouvrir Raccourcis";
+"Close" = "Fermer";
+"Step %lld" = "Étape %lld";
+"Turn on the lock" = "Activez le verrou";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "Dans Unreel, touchez ≡ puis activez Verrouiller l'app Instagram.";
+"Allow Screen Time" = "Autorisez Temps d'écran";
+"Tap Continue and confirm with Face ID or your passcode." = "Touchez Continuer et confirmez avec Face ID ou votre code.";
+"Pick Instagram" = "Choisissez Instagram";
+"Tick Instagram in the list, then tap Done." = "Cochez Instagram dans la liste, puis touchez OK.";
+"That's it" = "C'est tout";
+"Opening Instagram now shows this screen. Tap Open Unreel, then the notification." = "Ouvrir Instagram affiche maintenant cet écran. Touchez Ouvrir Unreel, puis la notification.";
+"Go to the Automation tab and tap +." = "Allez dans l'onglet Automatisation et touchez +.";
+"Choose App" = "Choisissez App";
+"Pick App from the list." = "Choisissez App dans la liste.";
+"Choose Instagram, Is Opened and Run Immediately. Tap Next." = "Choisissez Instagram, Est ouverte et Exécuter immédiatement. Touchez Suivant.";
+"Tap New Blank Automation, add Open App, choose Unreel, then Done." = "Touchez Nouvelle automatisation vide, ajoutez Ouvrir l'app, choisissez Unreel, puis OK.";

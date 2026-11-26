@@ -1,12 +1,15 @@
 import FamilyControls
 import SwiftUI
+import UIKit
 
 /// "Screen Time" in Settings: lock the real Instagram app so the only way in is Unreel.
 struct LockSection: View {
     @StateObject private var lock = LockModel()
+    @State private var guide: SetupGuideView.Guide?
 
     var body: some View {
         Section {
+            Button("How to set it up") { guide = .lock }
             Toggle("Lock the Instagram app", isOn: Binding(
                 get: { lock.enabled },
                 set: { on in
@@ -27,6 +30,25 @@ struct LockSection: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(lock.errorText ?? "")
+        }
+        .sheet(item: $guide) { which in
+            if which == .redirect {
+                SetupGuideView(guide: which, finishTitle: "Open Shortcuts") {
+                    if let url = URL(string: "shortcuts://") { UIApplication.shared.open(url) }
+                }
+            } else {
+                SetupGuideView(guide: which)
+            }
+        }
+
+        // Jumping straight from Instagram to Unreel takes a Shortcuts automation, which only
+        // the user can create (Apple doesn't let apps make one or open apps from the lock screen).
+        Section {
+            Button("Set it up") { guide = .redirect }
+        } header: {
+            Text("Open Unreel from Instagram")
+        } footer: {
+            Text("With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute.")
         }
     }
 }

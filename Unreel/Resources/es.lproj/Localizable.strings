@@ -107,3 +107,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "La última comprobación no pudo cargar tus mensajes a tiempo. Lo volverá a intentar.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram cambió su página de mensajes. Llegará un arreglo automáticamente.";
 "Tap here to open Unreel." = "Toca aquí para abrir Unreel.";
+
+/* Setup guides */
+"How to set it up" = "Cómo configurarlo";
+"Set it up" = "Configurar";
+"Open Unreel from Instagram" = "Abrir Unreel desde Instagram";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "Con una automatización de Atajos, abrir Instagram o tocar una de sus notificaciones te lleva directo a Unreel. Tarda un minuto.";
+"Open Shortcuts" = "Abrir Atajos";
+"Close" = "Cerrar";
+"Step %lld" = "Paso %lld";
+"Turn on the lock" = "Activa el bloqueo";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "En Unreel, toca ≡ y activa Bloquear la app de Instagram.";
+"Allow Screen Time" = "Permite Tiempo de uso";
+"Tap Continue and confirm with Face ID or your passcode." = "Toca Continuar y confirma con Face ID o tu código.";
+"Pick Instagram" = "Elige Instagram";
+"Tick Instagram in the list, then tap Done." = "Marca Instagram en la lista y toca OK.";
+"That's it" = "Listo";
+"Opening Instagram now shows this screen. Tap Open Unreel, then the notification." = "Al abrir Instagram verás esta pantalla. Toca Abrir Unreel y luego la notificación.";
+"Go to the Automation tab and tap +." = "Ve a la pestaña Automatización y toca +.";
+"Choose App" = "Elige App";
+"Pick App from the list." = "Elige App en la lista.";
+"Choose Instagram, Is Opened and Run Immediately. Tap Next." = "Elige Instagram, Se abre y Ejecutar inmediatamente. Toca Siguiente.";
+"Tap New Blank Automation, add Open App, choose Unreel, then Done." = "Toca Nueva automatización en blanco, añade Abrir app, elige Unreel y toca OK.";

@@ -107,3 +107,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "Die letzte Prüfung konnte deine Nachrichten nicht rechtzeitig laden. Sie versucht es erneut.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram hat seine Nachrichtenseite geändert. Eine Korrektur kommt automatisch.";
 "Tap here to open Unreel." = "Tippe hier, um Unreel zu öffnen.";
+
+/* Setup guides */
+"How to set it up" = "So richtest du es ein";
+"Set it up" = "Einrichten";
+"Open Unreel from Instagram" = "Unreel aus Instagram öffnen";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "Mit einer Kurzbefehle-Automation landest du beim Öffnen von Instagram oder beim Tippen auf eine seiner Mitteilungen direkt in Unreel. Dauert etwa eine Minute.";
+"Open Shortcuts" = "Kurzbefehle öffnen";
+"Close" = "Schließen";
+"Step %lld" = "Schritt %lld";
+"Turn on the lock" = "Sperre einschalten";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "Tippe in Unreel auf ≡ und schalte Instagram-App sperren ein.";
+"Allow Screen Time" = "Bildschirmzeit erlauben";
+"Tap Continue and confirm with Face ID or your passcode." = "Tippe auf Fortfahren und bestätige mit Face ID oder deinem Code.";
+"Pick Instagram" = "Instagram auswählen";
+"Tick Instagram in the list, then tap Done." = "Hake Instagram in der Liste an und tippe auf Fertig.";
+"That's it" = "Das war's";
+"Opening Instagram now shows this screen. Tap Open Unreel, then the notification." = "Beim Öffnen von Instagram erscheint jetzt dieser Bildschirm. Tippe auf Unreel öffnen und dann auf die Mitteilung.";
+"Go to the Automation tab and tap +." = "Öffne den Tab Automation und tippe auf +.";
+"Choose App" = "App wählen";
+"Pick App from the list." = "Wähle App aus der Liste.";
+"Choose Instagram, Is Opened and Run Immediately. Tap Next." = "Wähle Instagram, Wird geöffnet und Sofort ausführen. Tippe auf Weiter.";
+"Tap New Blank Automation, add Open App, choose Unreel, then Done." = "Tippe auf Neue leere Automation, füge App öffnen hinzu, wähle Unreel und tippe auf Fertig.";

@@ -107,3 +107,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "마지막 확인에서 메시지를 제때 불러오지 못했습니다. 다시 시도합니다.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram이 메시지 페이지를 변경했습니다. 수정 사항이 자동으로 적용됩니다.";
 "Tap here to open Unreel." = "여기를 탭하여 Unreel을 여세요.";
+
+/* Setup guides */
+"How to set it up" = "설정 방법";
+"Set it up" = "설정하기";
+"Open Unreel from Instagram" = "Instagram에서 Unreel 열기";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "단축어 자동화를 사용하면 Instagram을 열거나 알림을 탭할 때 바로 Unreel로 이동합니다. 1분 정도 걸립니다.";
+"Open Shortcuts" = "단축어 열기";
+"Close" = "닫기";
+"Step %lld" = "%lld단계";
+"Turn on the lock" = "잠금 켜기";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "Unreel에서 ≡을 탭한 다음 Instagram 앱 잠그기를 켜세요.";
+"Allow Screen Time" = "스크린 타임 허용";
+"Tap Continue and confirm with Face ID or your passcode." = "계속을 탭하고 Face ID 또는 암호로 확인하세요.";
+"Pick Instagram" = "Instagram 선택";
+"Tick Instagram in the list, then tap Done." = "목록에서 Instagram을 선택하고 완료를 탭하세요.";
+"That's it" = "끝";
+"Opening Instagram now shows this screen. Tap Open Unreel, then the notification." = "이제 Instagram을 열면 이 화면이 나타납니다. Unreel 열기를 탭한 다음 알림을 탭하세요.";
+"Go to the Automation tab and tap +." = "자동화 탭으로 가서 +를 탭하세요.";
+"Choose App" = "앱 선택";
+"Pick App from the list." = "목록에서 앱을 선택하세요.";
+"Choose Instagram, Is Opened and Run Immediately. Tap Next." = "Instagram, 열릴 때, 즉시 실행을 선택하고 다음을 탭하세요.";
+"Tap New Blank Automation, add Open App, choose Unreel, then Done." = "새로운 빈 자동화를 탭하고 앱 열기를 추가한 다음 Unreel을 선택하고 완료를 탭하세요.";
