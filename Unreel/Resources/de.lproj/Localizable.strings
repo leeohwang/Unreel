@@ -92,7 +92,7 @@
 "Alert me about new messages" = "Bei neuen Nachrichten benachrichtigen";
 "Background App Refresh is off for Unreel, so it can't check. Turn it on in the Settings app under General > Background App Refresh." = "Die Hintergrundaktualisierung ist für Unreel aus, daher kann es nicht nachsehen. Schalte sie in den Einstellungen unter Allgemein > Hintergrundaktualisierung ein.";
 "Last checked" = "Zuletzt geprüft";
-"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel sieht nach deinen Nachrichten, wenn iOS es im Hintergrund laufen lässt. Hinweise können daher eine Stunde oder mehr zu spät kommen und hören auf, wenn du Unreel wegwischst. Die Prüfung läuft auf diesem iPhone; nichts wird irgendwohin gesendet. Für sofortige Hinweise behalte die Instagram-App und sperre sie unten mit Bildschirmzeit.";
+"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. Keeping your iPhone charging overnight gives it more chances. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel sieht nach deinen Nachrichten, wenn iOS es im Hintergrund laufen lässt. Hinweise können daher eine Stunde oder mehr zu spät kommen und hören auf, wenn du Unreel wegwischst. Wenn dein iPhone über Nacht lädt, hat es mehr Gelegenheiten. Die Prüfung läuft auf diesem iPhone; nichts wird irgendwohin gesendet. Für sofortige Hinweise behalte die Instagram-App und sperre sie unten mit Bildschirmzeit.";
 "Notifications are off for Unreel" = "Mitteilungen sind für Unreel aus";
 "Open Settings" = "Einstellungen öffnen";
 "Cancel" = "Abbrechen";
@@ -100,3 +100,9 @@
 "Sent you a message" = "Hat dir eine Nachricht gesendet";
 "New messages" = "Neue Nachrichten";
 "You have %lld unread chats" = "Du hast %lld ungelesene Chats";
+"Last background check" = "Letzte Prüfung im Hintergrund";
+"Background checks so far" = "Bisherige Prüfungen";
+"Not yet" = "Noch nicht";
+"The last check found you logged out. Open Unreel and log in to Instagram." = "Bei der letzten Prüfung warst du abgemeldet. Öffne Unreel und melde dich bei Instagram an.";
+"The last check couldn't load your inbox in time. It will try again." = "Die letzte Prüfung konnte deine Nachrichten nicht rechtzeitig laden. Sie versucht es erneut.";
+"Instagram changed its inbox page. A fix will arrive automatically." = "Instagram hat seine Nachrichtenseite geändert. Eine Korrektur kommt automatisch.";
