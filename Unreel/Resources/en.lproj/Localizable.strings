@@ -92,7 +92,7 @@
 "Alert me about new messages" = "Alert me about new messages";
 "Background App Refresh is off for Unreel, so it can't check. Turn it on in the Settings app under General > Background App Refresh." = "Background App Refresh is off for Unreel, so it can't check. Turn it on in the Settings app under General > Background App Refresh.";
 "Last checked" = "Last checked";
-"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below.";
+"Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. Keeping your iPhone charging overnight gives it more chances. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below." = "Unreel checks your messages when iOS lets it run in the background, so alerts can be an hour or more late, and stop if you swipe Unreel away. Keeping your iPhone charging overnight gives it more chances. The check happens on this iPhone; nothing is sent anywhere. For instant alerts, keep the Instagram app and lock it with Screen Time below.";
 "Notifications are off for Unreel" = "Notifications are off for Unreel";
 "Open Settings" = "Open Settings";
 "Cancel" = "Cancel";
@@ -100,3 +100,10 @@
 "Sent you a message" = "Sent you a message";
 "New messages" = "New messages";
 "You have %lld unread chats" = "You have %lld unread chats";
+"Last background check" = "Last background check";
+"Background checks so far" = "Background checks so far";
+"Not yet" = "Not yet";
+"The last check found you logged out. Open Unreel and log in to Instagram." = "The last check found you logged out. Open Unreel and log in to Instagram.";
+"The last check couldn't load your inbox in time. It will try again." = "The last check couldn't load your inbox in time. It will try again.";
+"Instagram changed its inbox page. A fix will arrive automatically." = "Instagram changed its inbox page. A fix will arrive automatically.";
+"Tap here to open Unreel." = "Tap here to open Unreel.";

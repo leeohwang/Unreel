@@ -74,8 +74,10 @@ targets:
         # Message alerts: a best-effort inbox check when iOS allows (see MessageAlerts.swift).
         UIBackgroundModes:
           - fetch
+          - processing
         BGTaskSchedulerPermittedIdentifiers:
           - com.leeohwang.unreelapp.messagecheck
+          - com.leeohwang.unreelapp.messagecheck.charging
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp

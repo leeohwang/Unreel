@@ -15,14 +15,25 @@ import UserNotifications
 @MainActor
 enum MessageAlerts {
     nonisolated static let taskID = "com.leeohwang.unreelapp.messagecheck"
+    /// A second, longer chance to check while the phone is charging (usually overnight).
+    /// iOS tends to grant these more readily than app refresh to an app it has little history for.
+    nonisolated static let chargingTaskID = "com.leeohwang.unreelapp.messagecheck.charging"
 
     private static let defaults = UserDefaults.standard
     private enum Keys {
         static let enabled = "messageAlertsEnabled"
         static let alerted = "messageAlertsAlerted"          // [String]: chat + last message we alerted about
         static let lastCount = "messageAlertsLastCount"      // Int: unread count at the last check
-        static let hasBaseline = "messageAlertsHasBaseline"  // Bool: first check done
         static let lastCheck = "messageAlertsLastCheck"      // Date
+        static let lastBackgroundRun = "messageAlertsLastBackgroundRun"      // Date: iOS last ran our task
+        static let lastBackgroundResult = "messageAlertsLastBackgroundResult" // String: what that run found
+        static let backgroundRuns = "messageAlertsBackgroundRuns"            // Int
+    }
+
+    /// What iOS's last background run of the check did, for Settings. nil if iOS hasn't run it yet.
+    static var lastBackgroundRun: (date: Date, result: String, count: Int)? {
+        guard let date = defaults.object(forKey: Keys.lastBackgroundRun) as? Date else { return nil }
+        return (date, defaults.string(forKey: Keys.lastBackgroundResult) ?? "", defaults.integer(forKey: Keys.backgroundRuns))
     }
 
     static var isEnabled: Bool { defaults.bool(forKey: Keys.enabled) }
@@ -43,9 +54,6 @@ enum MessageAlerts {
         let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         guard granted else { return false }
         defaults.set(true, forKey: Keys.enabled)
-        // The first check only notes what's already unread, so turning this on
-        // doesn't set off a burst of alerts about old messages.
-        defaults.set(false, forKey: Keys.hasBaseline)
         schedule()
         return true
     }
@@ -53,6 +61,7 @@ enum MessageAlerts {
     static func turnOff() {
         defaults.set(false, forKey: Keys.enabled)
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskID)
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: chargingTaskID)
         UNUserNotificationCenter.current().setBadgeCount(0) { _ in }
     }
 
@@ -60,9 +69,10 @@ enum MessageAlerts {
 
     /// Must run before the app finishes launching.
     nonisolated static func register() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: taskID, using: .main) { task in
-            guard let task = task as? BGAppRefreshTask else { return }
-            MainActor.assumeIsolated { handle(task) }
+        for id in [taskID, chargingTaskID] {
+            BGTaskScheduler.shared.register(forTaskWithIdentifier: id, using: .main) { task in
+                MainActor.assumeIsolated { handle(task) }
+            }
         }
     }
 
@@ -70,59 +80,72 @@ enum MessageAlerts {
     /// iOS usually waits longer.
     static func schedule() {
         guard isEnabled else { return }
-        let request = BGAppRefreshTaskRequest(identifier: taskID)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
-        do {
-            try BGTaskScheduler.shared.submit(request)
-        } catch {
-            // Expected in the Simulator, which doesn't run app refresh tasks.
-            #if DEBUG
-            print("Message alerts: couldn't schedule a check:", error)
-            #endif
+        let refresh = BGAppRefreshTaskRequest(identifier: taskID)
+        refresh.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+        let charging = BGProcessingTaskRequest(identifier: chargingTaskID)
+        charging.requiresExternalPower = true
+        charging.requiresNetworkConnectivity = true
+        charging.earliestBeginDate = Date(timeIntervalSinceNow: 30 * 60)
+        for request in [refresh, charging] as [BGTaskRequest] {
+            do {
+                try BGTaskScheduler.shared.submit(request)
+            } catch {
+                // Expected in the Simulator, which doesn't run background tasks.
+                #if DEBUG
+                print("Message alerts: couldn't schedule \(request.identifier):", error)
+                #endif
+            }
         }
     }
 
-    private static func handle(_ task: BGAppRefreshTask) {
+    private static func handle(_ task: BGTask) {
         schedule()
         let probe = InboxProbe()
         task.expirationHandler = { Task { @MainActor in probe.cancel() } }
         Task { @MainActor in
-            let found = await check(using: probe)
-            task.setTaskCompleted(success: found)
+            let outcome = await check(using: probe)
+            // Recorded so Settings can show whether iOS is running the check at all.
+            defaults.set(Date(), forKey: Keys.lastBackgroundRun)
+            defaults.set(outcome.rawValue, forKey: Keys.lastBackgroundResult)
+            defaults.set(defaults.integer(forKey: Keys.backgroundRuns) + 1, forKey: Keys.backgroundRuns)
+            task.setTaskCompleted(success: outcome == .read)
         }
+    }
+
+    enum Outcome: String {
+        case read, off, timedOut, loggedOut, pageChanged
     }
 
     // MARK: The check
 
-    /// Reads the inbox and posts alerts. Returns whether the page could be read.
+    /// Reads the inbox and posts alerts.
     @discardableResult
-    static func check(using probe: InboxProbe? = nil, debug: Bool = false) async -> Bool {
-        guard isEnabled || debug else { return false }
+    static func check(using probe: InboxProbe? = nil, debug: Bool = false) async -> Outcome {
+        guard isEnabled || debug else { return .off }
         // Default arguments are evaluated outside the main actor, so make the probe here.
         let probe = probe ?? InboxProbe()
         let rules = RulesStore.saved().inbox ?? .fallback
         guard let result = await probe.run(rules: rules, timeout: debug ? 60 : 25, debug: debug) else {
             if debug { writeDebugNote("probe returned nil (timed out, page failed to load, or result didn't decode)") }
             Analytics.breakage("inbox-timeout", rulesVersion: RulesStore.saved().version)
-            return false
+            return .timedOut
         }
         if debug { writeDebugDump(result) }
-        guard result.loggedIn else { return false }
+        guard result.loggedIn else { return .loggedOut }
         guard result.listFound else {
             // Instagram changed its inbox page; new rules can fix this without an update.
             Analytics.breakage("inbox-unreadable", rulesVersion: RulesStore.saved().version)
-            return false
+            return .pageChanged
         }
         defaults.set(Date(), forKey: Keys.lastCheck)
-        await process(result, debug: debug)
-        return true
+        await process(result)
+        return .read
     }
 
-    private static func process(_ result: InboxProbe.Result, debug: Bool) async {
-        // Debug runs always alert, so a test right after turning alerts on shows a banner.
-        let isBaseline = !defaults.bool(forKey: Keys.hasBaseline) && !debug
-        defaults.set(true, forKey: Keys.hasBaseline)
-
+    // No "first check is a baseline" rule: when iOS runs the first check can be hours
+    // after alerts were turned on, and skipping it silently lost real messages.
+    // At most 5 alerts per check keeps a first run with old unread chats reasonable.
+    private static func process(_ result: InboxProbe.Result) async {
         var alerted = Set(defaults.stringArray(forKey: Keys.alerted) ?? [])
         let lastCount = defaults.integer(forKey: Keys.lastCount)
         let count = result.unreadCount ?? 0
@@ -139,7 +162,6 @@ enum MessageAlerts {
         alerted = alerted.intersection(unreadKeys)
         defaults.set(Array(alerted), forKey: Keys.alerted)
 
-        guard !isBaseline else { return }
         if !fresh.isEmpty {
             for chat in fresh.prefix(5) { post(chat) }
         } else if result.threads.isEmpty, count > lastCount {
@@ -174,8 +196,8 @@ enum MessageAlerts {
         let taskID = UIApplication.shared.beginBackgroundTask(withName: "debug-message-check")
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(5))
-            let ok = await check(debug: true)
-            writeDebugNote("background check finished, read page: \(ok), app state: \(UIApplication.shared.applicationState.rawValue) (2 = background)", append: true)
+            let outcome = await check(debug: true)
+            writeDebugNote("background check finished: \(outcome.rawValue), app state: \(UIApplication.shared.applicationState.rawValue) (2 = background)", append: true)
             UIApplication.shared.endBackgroundTask(taskID)
         }
     }

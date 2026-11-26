@@ -26,7 +26,7 @@ final class ShieldActionExtension: ShieldActionDelegate {
         case .primaryButtonPressed:
             let content = UNMutableNotificationContent()
             content.title = String(localized: "Open Unreel")
-            content.body = String(localized: "Tap to see your messages.")
+            content.body = String(localized: "Tap here to open Unreel.")
             content.userInfo = ["path": "/direct/inbox/"]
             let request = UNNotificationRequest(identifier: "unreel.open", content: content, trigger: nil)
             UNUserNotificationCenter.current().add(request) { _ in done(.close) }
