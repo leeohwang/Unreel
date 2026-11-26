@@ -15,6 +15,24 @@ struct LockSection: View {
                 set: { on in
                     if on { Task { await lock.turnOn() } } else { lock.turnOff() }
                 }))
+            // Presentations hang off this one row: on a Section inside a Form they'd apply
+            // to every row, each would try to present at once, and Settings would close.
+            .familyActivityPicker(isPresented: $lock.showPicker, selection: $lock.selection)
+            .alert("Couldn't turn on the lock", isPresented: Binding(
+                get: { lock.errorText != nil }, set: { if !$0 { lock.errorText = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(lock.errorText ?? "")
+            }
+            .sheet(item: $guide) { which in
+                if which == .redirect {
+                    SetupGuideView(guide: which, finishTitle: "Open Shortcuts") {
+                        if let url = URL(string: "shortcuts://") { UIApplication.shared.open(url) }
+                    }
+                } else {
+                    SetupGuideView(guide: which)
+                }
+            }
             if lock.enabled {
                 Button(lock.hasApps ? "Change locked apps" : "Choose apps to lock") { lock.showPicker = true }
                 LabeledContent("Posting passes left today", value: "\(lock.passesLeft)")
@@ -23,22 +41,6 @@ struct LockSection: View {
             Text("Screen Time")
         } footer: {
             Text("Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video.")
-        }
-        .familyActivityPicker(isPresented: $lock.showPicker, selection: $lock.selection)
-        .alert("Couldn't turn on the lock", isPresented: Binding(
-            get: { lock.errorText != nil }, set: { if !$0 { lock.errorText = nil } })) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(lock.errorText ?? "")
-        }
-        .sheet(item: $guide) { which in
-            if which == .redirect {
-                SetupGuideView(guide: which, finishTitle: "Open Shortcuts") {
-                    if let url = URL(string: "shortcuts://") { UIApplication.shared.open(url) }
-                }
-            } else {
-                SetupGuideView(guide: which)
-            }
         }
 
         // Jumping straight from Instagram to Unreel takes a Shortcuts automation, which only

@@ -122,7 +122,8 @@ struct SetupGuideView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                    // Same height on every step so the screenshot doesn't jump while swiping.
+                    .lineLimit(3, reservesSpace: true)
             }
             .padding(.horizontal, 28)
         }
