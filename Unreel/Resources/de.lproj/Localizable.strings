@@ -73,18 +73,16 @@
 "Lock the Instagram app" = "Instagram-App sperren";
 "Change locked apps" = "Gesperrte Apps ändern";
 "Choose apps to lock" = "Apps zum Sperren wählen";
-"Posting passes left today" = "Heute übrige Posting-Pässe";
-"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video." = "Öffnest du die gesperrte App, siehst du einen Bildschirm, der dich hierher zurückführt. Ihre Mitteilungen kommen weiter an, du verpasst also keine Nachrichten. Zweimal am Tag kannst du sie für 5 Minuten entsperren, um etwas zu posten, das die Website nicht kann, etwa ein Video.";
+"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages." = "Öffnest du die gesperrte App, siehst du einen Bildschirm, der dich hierher zurückführt. Ihre Mitteilungen kommen weiter an, du verpasst also keine Nachrichten.";
 "Couldn't turn on the lock" = "Sperre konnte nicht aktiviert werden";
 "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time." = "Der Zugriff auf Bildschirmzeit wurde nicht erlaubt. Versuch es noch einmal oder aktiviere ihn in den Einstellungen unter Bildschirmzeit.";
 "Make Unreel the only way in" = "Mach Unreel zum einzigen Weg hinein";
-"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video." = "Sperre die Instagram-App mit Bildschirmzeit. Ihre Mitteilungen kommen weiter an, und beim Öffnen landest du wieder bei Unreel. Zweimal am Tag kannst du sie für 5 Minuten entsperren, um ein Video zu posten.";
+"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel." = "Sperre die Instagram-App mit Bildschirmzeit. Ihre Mitteilungen kommen weiter an, und beim Öffnen landest du wieder bei Unreel.";
 "Lock it" = "Sperren";
 "Not now" = "Nicht jetzt";
 "Locked by Unreel" = "Von Unreel gesperrt";
 "Your messages are waiting in Unreel, without the Reels." = "Deine Nachrichten warten in Unreel, ohne Reels.";
 "Open Unreel" = "Unreel öffnen";
-"Post something (%lld min)" = "Etwas posten (%lld Min.)";
 "Tap to see your messages." = "Tippe, um deine Nachrichten zu sehen.";
 
 /* Message alerts */

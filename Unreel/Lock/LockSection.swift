@@ -35,12 +35,11 @@ struct LockSection: View {
             }
             if lock.enabled {
                 Button(lock.hasApps ? "Change locked apps" : "Choose apps to lock") { lock.showPicker = true }
-                LabeledContent("Posting passes left today", value: "\(lock.passesLeft)")
             }
         } header: {
             Text("Screen Time")
         } footer: {
-            Text("Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video.")
+            Text("Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages.")
         }
 
         // Jumping straight from Instagram to Unreel takes a Shortcuts automation, which only
@@ -68,7 +67,7 @@ struct LockOfferView: View {
             Text("Make Unreel the only way in")
                 .font(.system(size: 30, weight: .bold))
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video.")
+            Text("Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()

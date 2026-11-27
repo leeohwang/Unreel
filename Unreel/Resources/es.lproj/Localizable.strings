@@ -73,18 +73,16 @@
 "Lock the Instagram app" = "Bloquear la app de Instagram";
 "Change locked apps" = "Cambiar apps bloqueadas";
 "Choose apps to lock" = "Elegir apps para bloquear";
-"Posting passes left today" = "Pases para publicar que quedan hoy";
-"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video." = "Al abrir la app bloqueada verás una pantalla que te trae de vuelta aquí. Sus notificaciones siguen llegando, así que no te perderás mensajes. Dos veces al día puedes desbloquearla 5 minutos para publicar algo que la web no permite, como un vídeo.";
+"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages." = "Al abrir la app bloqueada verás una pantalla que te trae de vuelta aquí. Sus notificaciones siguen llegando, así que no te perderás mensajes.";
 "Couldn't turn on the lock" = "No se pudo activar el bloqueo";
 "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time." = "No se permitió el acceso a Tiempo de uso. Puedes intentarlo de nuevo o activarlo en Ajustes, en Tiempo de uso.";
 "Make Unreel the only way in" = "Haz que Unreel sea la única entrada";
-"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video." = "Bloquea la app de Instagram con Tiempo de uso. Sus notificaciones siguen llegando y, al abrirla, te lleva de vuelta a Unreel. Dos veces al día puedes desbloquearla 5 minutos para publicar un vídeo.";
+"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel." = "Bloquea la app de Instagram con Tiempo de uso. Sus notificaciones siguen llegando y, al abrirla, te lleva de vuelta a Unreel.";
 "Lock it" = "Bloquear";
 "Not now" = "Ahora no";
 "Locked by Unreel" = "Bloqueada por Unreel";
 "Your messages are waiting in Unreel, without the Reels." = "Tus mensajes te esperan en Unreel, sin los Reels.";
 "Open Unreel" = "Abrir Unreel";
-"Post something (%lld min)" = "Publicar algo (%lld min)";
 "Tap to see your messages." = "Toca para ver tus mensajes.";
 
 /* Message alerts */

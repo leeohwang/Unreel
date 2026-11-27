@@ -1,10 +1,8 @@
 import ManagedSettings
 import UserNotifications
 
-/// What the shield's buttons do.
-/// - "Open Unreel": an extension can't open another app, so it posts a
-///   notification that opens Unreel on your messages when tapped.
-/// - "Post something": a 5-minute posting pass (twice a day).
+/// What the shield's button does. "Open Unreel": an extension can't open another app,
+/// so it posts a notification that opens Unreel on your messages when tapped.
 final class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for application: ApplicationToken,
                          completionHandler: @escaping (ShieldActionResponse) -> Void) {
@@ -30,10 +28,7 @@ final class ShieldActionExtension: ShieldActionDelegate {
             content.userInfo = ["path": "/direct/inbox/"]
             let request = UNNotificationRequest(identifier: "unreel.open", content: content, trigger: nil)
             UNUserNotificationCenter.current().add(request) { _ in done(.close) }
-        case .secondaryButtonPressed:
-            // .defer redraws the shield; with the pass started, it is gone.
-            done(LockStore.startPass() ? .defer : .none)
-        @unknown default:
+        default:
             done(.close)
         }
     }

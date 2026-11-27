@@ -73,18 +73,16 @@
 "Lock the Instagram app" = "Lock the Instagram app";
 "Change locked apps" = "Change locked apps";
 "Choose apps to lock" = "Choose apps to lock";
-"Posting passes left today" = "Posting passes left today";
-"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video." = "Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video.";
+"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages." = "Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages.";
 "Couldn't turn on the lock" = "Couldn't turn on the lock";
 "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time." = "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time.";
 "Make Unreel the only way in" = "Make Unreel the only way in";
-"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video." = "Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video.";
+"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel." = "Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel.";
 "Lock it" = "Lock it";
 "Not now" = "Not now";
 "Locked by Unreel" = "Locked by Unreel";
 "Your messages are waiting in Unreel, without the Reels." = "Your messages are waiting in Unreel, without the Reels.";
 "Open Unreel" = "Open Unreel";
-"Post something (%lld min)" = "Post something (%lld min)";
 "Tap to see your messages." = "Tap to see your messages.";
 
 /* Message alerts */

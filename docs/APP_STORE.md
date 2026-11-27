@@ -3,9 +3,9 @@
 ## Release checklist
 
 - [ ] Apple Developer Program membership active ($99/year)
-- [ ] Family Controls (Distribution) entitlement requested and granted for the app **and** its three extensions (com.leeohwang.unreelapp, .shield, .shieldaction, .monitor): developer.apple.com/contact/request/family-controls-distribution. Approval can take days to weeks; without it the Screen Time lock only works in development builds. If it's not granted in time, ship v1 with the lock hidden and add it in v1.1.
+- [ ] Family Controls (Distribution) entitlement requested and granted for the app **and** its two extensions (com.leeohwang.unreelapp, .shield, .shieldaction): developer.apple.com/contact/request/family-controls-distribution. Approval can take days to weeks; without it the Screen Time lock only works in development builds. If it's not granted in time, ship v1 with the lock hidden and add it in v1.1.
 - [ ] App Group `group.com.leeohwang.unreel` registered, and all four bundle IDs have it plus Family Controls enabled
-- [ ] Real iPhone: lock Instagram in Settings > Screen Time, check its notifications still arrive, the shield's "Open Unreel" opens your messages, and a posting pass lifts the lock for 5 minutes
+- [ ] Real iPhone: lock Instagram in Settings > Screen Time, check its notifications still arrive, the shield's "Open Unreel" opens your messages
 - [ ] Bundle ID registered and app created in App Store Connect (name must not contain "Instagram"/"Insta")
 - [ ] TelemetryDeck app ID in `Config.swift` (or left empty)
 - [ ] Repo public + GitHub Pages on, privacy URL loads
@@ -62,11 +62,11 @@ Lead with **free** everywhere: most competitors charge $5 to $10 a month, and "f
 > 2. Reels from friends: open the chat with ____ and tap the Reel they sent. It plays. Swiping to the next Reel returns you to the chat.
 > 3. Posting: tap "+" at the top, choose Post or Story, and pick a photo. Instagram's own editor opens (you can cancel without sharing).
 > 4. Native features: the menu button (top right) opens Settings: on-device stats with a 7-day chart, feed blocking, daily time limit, Report a problem.
-> 5. Screen Time (optional): Settings > Screen Time > "Lock the Instagram app" uses the Family Controls API with `.individual` authorization. The user picks apps with Apple's FamilyActivityPicker, so Unreel only sees opaque tokens. The shield's "Open Unreel" button posts a local notification that opens Unreel's messages. A posting pass lifts the shield for 5 minutes, twice a day. If the Instagram app isn't installed on the review device, the lock can be tried on any other app.
+> 5. Screen Time (optional): Settings > Screen Time > "Lock the Instagram app" uses the Family Controls API with `.individual` authorization. The user picks apps with Apple's FamilyActivityPicker, so Unreel only sees opaque tokens. The shield's "Open Unreel" button posts a local notification that opens Unreel's messages. If the Instagram app isn't installed on the review device, the lock can be tried on any other app.
 
 ## Likely rejection reasons and answers
 
-- **4.2 Minimum functionality / "just a website":** point to native features: Screen Time lock with shield and posting passes, native photo picker for posting, on-device stats with chart, daily limit, feed blocking, remote rule updates, five languages.
+- **4.2 Minimum functionality / "just a website":** point to native features: Screen Time lock with shield, native photo picker for posting, on-device stats with chart, daily limit, feed blocking, remote rule updates, five languages.
 - **5.1.1 / Family Controls:** the entitlement must be granted for every target before submission; explain in the note that the picker returns only opaque tokens and nothing leaves the phone.
 - **5.2.1 Intellectual property:** no Instagram name or logo in the app name, icon or screenshots' captions; keep the "not affiliated" line. Konvo and others were approved with this setup.
 - **2.1 Couldn't log in:** always give a working test account, and check it isn't stuck on a security checkpoint before submitting.

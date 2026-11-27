@@ -16,7 +16,6 @@ final class LockModel: ObservableObject {
     @Published var errorText: String?
 
     var hasApps: Bool { !selection.applicationTokens.isEmpty || !selection.categoryTokens.isEmpty }
-    var passesLeft: Int { LockStore.passesLeftToday }
 
     /// Asks for Screen Time access (Face ID / passcode), then for notification
     /// permission, then shows Apple's app picker so the user can choose Instagram.
@@ -39,8 +38,8 @@ final class LockModel: ObservableObject {
         LockStore.clearShield()
     }
 
-    /// Re-applies the lock on launch, in case it was lifted by a pass that the
-    /// monitor didn't get to end (for example after a restart).
+    /// Re-applies the lock on launch, so it is on even if an older version left it
+    /// lifted for a posting pass (that pass no longer exists).
     static func restoreOnLaunch() {
         guard LockStore.isEnabled, AuthorizationCenter.shared.authorizationStatus == .approved else { return }
         LockStore.applyShield()
