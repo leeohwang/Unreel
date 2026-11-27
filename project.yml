@@ -33,6 +33,7 @@ targetTemplates:
       - path: Unreel/Resources
         excludes:
           - rules.json
+          - Guide/**
     entitlements:
       path: Extensions/${target_name}.entitlements
       properties:

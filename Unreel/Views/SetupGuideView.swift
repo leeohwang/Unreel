@@ -1,9 +1,11 @@
+import AVFoundation
 import SwiftUI
 import UIKit
 
-/// A short, swipeable how-to: one screenshot and one line per step.
-/// Screenshots are bundled as Resources/Guide/guide-<id>-<n>.png; until one exists,
-/// the step shows a plain placeholder so the guide still reads well.
+/// A short, swipeable how-to: one looping clip and one line per step.
+/// Clips are bundled as Resources/Guide/guide-<id>-<n>.mp4 (silent, cut from real
+/// screen recordings). A .png of the same name works too; with neither, the step
+/// shows a plain placeholder so the guide still reads well.
 struct SetupGuideView: View {
     enum Guide: String, Identifiable {
         case lock, redirect
@@ -38,21 +40,21 @@ struct SetupGuideView: View {
             Step(image: "guide-lock-1", title: "Turn on the lock",
                  detail: "In Unreel, tap ≡, then turn on Lock the Instagram app.", symbol: "lock"),
             Step(image: "guide-lock-2", title: "Allow Screen Time",
-                 detail: "Tap Continue and confirm with Face ID or your passcode.", symbol: "hourglass"),
+                 detail: "Tap Continue, confirm with Face ID or your passcode, then allow notifications.", symbol: "hourglass"),
             Step(image: "guide-lock-3", title: "Pick Instagram",
-                 detail: "Tick Instagram in the list, then tap Done.", symbol: "checkmark.circle"),
+                 detail: "Tap Choose Activities, open Social, tick Instagram, then tap Done.", symbol: "checkmark.circle"),
             Step(image: "guide-lock-4", title: "That's it",
-                 detail: "Opening Instagram now shows this screen. Tap Open Unreel, then the notification.", symbol: "hand.raised"),
+                 detail: "The lock is on. Opening Instagram now shows a screen with an Open Unreel button.", symbol: "hand.raised"),
         ]
         case .redirect: [
-            Step(image: "guide-redirect-1", title: "Open Shortcuts",
-                 detail: "Go to the Automation tab and tap +.", symbol: "square.stack.3d.up"),
-            Step(image: "guide-redirect-2", title: "Choose App",
-                 detail: "Pick App from the list.", symbol: "app"),
-            Step(image: "guide-redirect-3", title: "Pick Instagram",
-                 detail: "Choose Instagram, Is Opened and Run Immediately. Tap Next.", symbol: "checkmark.circle"),
-            Step(image: "guide-redirect-4", title: "Open Unreel",
-                 detail: "Tap New Blank Automation, add Open App, choose Unreel, then Done.", symbol: "arrow.uturn.right"),
+            Step(image: "guide-redirect-1", title: "Start an automation",
+                 detail: "In Shortcuts, tap +. Tap Automation, scroll down and tap App.", symbol: "square.stack.3d.up"),
+            Step(image: "guide-redirect-2", title: "Pick Instagram",
+                 detail: "In When App is Opened, tap App and choose Instagram.", symbol: "app"),
+            Step(image: "guide-redirect-3", title: "Open Unreel",
+                 detail: "Add the Open App action, tap App and choose Unreel.", symbol: "arrow.uturn.right"),
+            Step(image: "guide-redirect-4", title: "That's it",
+                 detail: "Go back to save it. Opening Instagram now takes you to Unreel.", symbol: "checkmark.circle"),
         ]
         }
     }
@@ -73,7 +75,7 @@ struct SetupGuideView: View {
 
             TabView(selection: $page) {
                 ForEach(steps.indices, id: \.self) { index in
-                    stepView(steps[index], number: index + 1).tag(index)
+                    stepView(steps[index], number: index + 1, isCurrent: index == page).tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -108,9 +110,9 @@ struct SetupGuideView: View {
         .background(Color(.systemBackground))
     }
 
-    private func stepView(_ step: Step, number: Int) -> some View {
+    private func stepView(_ step: Step, number: Int, isCurrent: Bool) -> some View {
         VStack(spacing: 18) {
-            screenshot(step)
+            screenshot(step, isCurrent: isCurrent)
                 .frame(maxHeight: .infinity)
             VStack(spacing: 6) {
                 Text("Step \(number)")
@@ -130,18 +132,18 @@ struct SetupGuideView: View {
         .padding(.top, 4)
     }
 
-    /// The screenshot in a thin phone-like frame, or a placeholder until one is bundled.
+    /// The clip or screenshot in a thin phone-like frame, or a placeholder until one is bundled.
     @ViewBuilder
-    private func screenshot(_ step: Step) -> some View {
-        if let image = UIImage(named: step.image) {
+    private func screenshot(_ step: Step, isCurrent: Bool) -> some View {
+        if let url = Bundle.main.url(forResource: step.image, withExtension: "mp4") {
+            LoopingClip(url: url, isPlaying: isCurrent)
+                .aspectRatio(540.0 / 1102.0, contentMode: .fit)
+                .modifier(PhoneFrame())
+        } else if let image = UIImage(named: step.image) {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1))
-                .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
-                .padding(.horizontal, 48)
+                .modifier(PhoneFrame())
         } else {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color.secondary.opacity(0.08))
@@ -151,5 +153,56 @@ struct SetupGuideView: View {
                     .foregroundStyle(.secondary))
                 .padding(.horizontal, 48)
         }
+    }
+}
+
+private struct PhoneFrame: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1))
+            .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
+            .padding(.horizontal, 48)
+    }
+}
+
+/// A silent clip that loops while its step is on screen and restarts when you come back to it.
+/// It has no audio track, so it never interrupts music or other audio.
+private struct LoopingClip: UIViewRepresentable {
+    let url: URL
+    let isPlaying: Bool
+
+    func makeUIView(context: Context) -> PlayerView {
+        let view = PlayerView()
+        let player = AVQueuePlayer()
+        player.isMuted = true
+        player.preventsDisplaySleepDuringVideoPlayback = false
+        view.looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+        view.playerLayer.player = player
+        view.playerLayer.videoGravity = .resizeAspect
+        view.backgroundColor = .secondarySystemBackground
+        return view
+    }
+
+    func updateUIView(_ view: PlayerView, context: Context) {
+        guard let player = view.playerLayer.player else { return }
+        if isPlaying, player.rate == 0 {
+            player.seek(to: .zero)
+            player.play()
+        } else if !isPlaying, player.rate != 0 {
+            player.pause()
+        }
+    }
+
+    static func dismantleUIView(_ view: PlayerView, coordinator: ()) {
+        view.playerLayer.player?.pause()
+        view.looper?.disableLooping()
+    }
+
+    final class PlayerView: UIView {
+        var looper: AVPlayerLooper?
+        override static var layerClass: AnyClass { AVPlayerLayer.self }
+        var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
     }
 }
