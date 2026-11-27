@@ -73,18 +73,16 @@
 "Lock the Instagram app" = "Lock the Instagram app";
 "Change locked apps" = "Change locked apps";
 "Choose apps to lock" = "Choose apps to lock";
-"Posting passes left today" = "Posting passes left today";
-"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video." = "Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video.";
+"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages." = "Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages.";
 "Couldn't turn on the lock" = "Couldn't turn on the lock";
 "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time." = "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time.";
 "Make Unreel the only way in" = "Make Unreel the only way in";
-"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video." = "Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video.";
+"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel." = "Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel.";
 "Lock it" = "Lock it";
 "Not now" = "Not now";
 "Locked by Unreel" = "Locked by Unreel";
 "Your messages are waiting in Unreel, without the Reels." = "Your messages are waiting in Unreel, without the Reels.";
 "Open Unreel" = "Open Unreel";
-"Post something (%lld min)" = "Post something (%lld min)";
 "Tap to see your messages." = "Tap to see your messages.";
 
 /* Message alerts */
@@ -107,3 +105,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "The last check couldn't load your inbox in time. It will try again.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram changed its inbox page. A fix will arrive automatically.";
 "Tap here to open Unreel." = "Tap here to open Unreel.";
+
+/* Setup guides */
+"How to set it up" = "How to set it up";
+"Set it up" = "Set it up";
+"Open Unreel from Instagram" = "Open Unreel from Instagram";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute.";
+"Open Shortcuts" = "Open Shortcuts";
+"Close" = "Close";
+"Step %lld" = "Step %lld";
+"Turn on the lock" = "Turn on the lock";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "In Unreel, tap ≡, then turn on Lock the Instagram app.";
+"Allow Screen Time" = "Allow Screen Time";
+"Pick Instagram" = "Pick Instagram";
+"That's it" = "That's it";
+"Tap Continue, confirm with Face ID or your passcode, then allow notifications." = "Tap Continue, confirm with Face ID or your passcode, then allow notifications.";
+"Tap Choose Activities, open Social, tick Instagram, then tap Done." = "Tap Choose Activities, open Social, tick Instagram, then tap Done.";
+"The lock is on. Opening Instagram now shows a screen with an Open Unreel button." = "The lock is on. Opening Instagram now shows a screen with an Open Unreel button.";
+"Start an automation" = "Start an automation";
+"In Shortcuts, tap +. Tap Automation, scroll down and tap App." = "In Shortcuts, tap +. Tap Automation, scroll down and tap App.";
+"In When App is Opened, tap App and choose Instagram." = "In When App is Opened, tap App and choose Instagram.";
+"Add the Open App action, tap App and choose Unreel." = "Add the Open App action, tap App and choose Unreel.";
+"Go back to save it. Opening Instagram now takes you to Unreel." = "Go back to save it. Opening Instagram now takes you to Unreel.";

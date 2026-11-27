@@ -73,18 +73,16 @@
 "Lock the Instagram app" = "Verrouiller l'app Instagram";
 "Change locked apps" = "Modifier les apps verrouillées";
 "Choose apps to lock" = "Choisir les apps à verrouiller";
-"Posting passes left today" = "Pass de publication restants aujourd'hui";
-"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages. Twice a day you can unlock it for 5 minutes to post something the website can't, like a video." = "Ouvrir l'app verrouillée affiche un écran qui vous ramène ici. Ses notifications arrivent toujours, vous ne manquerez aucun message. Deux fois par jour, vous pouvez la déverrouiller 5 minutes pour publier ce que le site ne permet pas, comme une vidéo.";
+"Opening the locked app shows a screen that points you back here. Its notifications still arrive, so you won't miss messages." = "Ouvrir l'app verrouillée affiche un écran qui vous ramène ici. Ses notifications arrivent toujours, vous ne manquerez aucun message.";
 "Couldn't turn on the lock" = "Impossible d'activer le verrouillage";
 "Screen Time access wasn't allowed. You can try again, or turn it on in the Settings app under Screen Time." = "L'accès à Temps d'écran n'a pas été autorisé. Réessayez, ou activez-le dans Réglages, sous Temps d'écran.";
 "Make Unreel the only way in" = "Faites d'Unreel le seul accès";
-"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel. Twice a day you can unlock it for 5 minutes to post a video." = "Verrouillez l'app Instagram avec Temps d'écran. Ses notifications arrivent toujours, et l'ouvrir vous ramène à Unreel. Deux fois par jour, vous pouvez la déverrouiller 5 minutes pour publier une vidéo.";
+"Lock the Instagram app with Screen Time. Its notifications still arrive, and opening it points you back to Unreel." = "Verrouillez l'app Instagram avec Temps d'écran. Ses notifications arrivent toujours, et l'ouvrir vous ramène à Unreel.";
 "Lock it" = "Verrouiller";
 "Not now" = "Pas maintenant";
 "Locked by Unreel" = "Verrouillée par Unreel";
 "Your messages are waiting in Unreel, without the Reels." = "Vos messages vous attendent dans Unreel, sans les Reels.";
 "Open Unreel" = "Ouvrir Unreel";
-"Post something (%lld min)" = "Publier quelque chose (%lld min)";
 "Tap to see your messages." = "Touchez pour voir vos messages.";
 
 /* Message alerts */
@@ -107,3 +105,25 @@
 "The last check couldn't load your inbox in time. It will try again." = "La dernière vérification n'a pas pu charger vos messages à temps. Elle réessaiera.";
 "Instagram changed its inbox page. A fix will arrive automatically." = "Instagram a modifié sa page de messages. Un correctif arrivera automatiquement.";
 "Tap here to open Unreel." = "Touchez ici pour ouvrir Unreel.";
+
+/* Setup guides */
+"How to set it up" = "Comment le configurer";
+"Set it up" = "Configurer";
+"Open Unreel from Instagram" = "Ouvrir Unreel depuis Instagram";
+"With a Shortcuts automation, opening Instagram or tapping one of its notifications takes you straight to Unreel. Takes about a minute." = "Avec une automatisation Raccourcis, ouvrir Instagram ou toucher une de ses notifications vous amène directement dans Unreel. Une minute suffit.";
+"Open Shortcuts" = "Ouvrir Raccourcis";
+"Close" = "Fermer";
+"Step %lld" = "Étape %lld";
+"Turn on the lock" = "Activez le verrou";
+"In Unreel, tap ≡, then turn on Lock the Instagram app." = "Dans Unreel, touchez ≡ puis activez Verrouiller l'app Instagram.";
+"Allow Screen Time" = "Autorisez Temps d'écran";
+"Pick Instagram" = "Choisissez Instagram";
+"That's it" = "C'est tout";
+"Tap Continue, confirm with Face ID or your passcode, then allow notifications." = "Touchez Continuer, confirmez avec Face ID ou votre code, puis autorisez les notifications.";
+"Tap Choose Activities, open Social, tick Instagram, then tap Done." = "Touchez Choisir des activités, ouvrez Réseaux sociaux, cochez Instagram, puis touchez OK.";
+"The lock is on. Opening Instagram now shows a screen with an Open Unreel button." = "Le verrou est activé. Ouvrir Instagram affiche maintenant un écran avec le bouton Ouvrir Unreel.";
+"Start an automation" = "Créez une automatisation";
+"In Shortcuts, tap +. Tap Automation, scroll down and tap App." = "Dans Raccourcis, touchez +. Touchez Automatisation, faites défiler et touchez App.";
+"In When App is Opened, tap App and choose Instagram." = "Dans Quand une app est ouverte, touchez App et choisissez Instagram.";
+"Add the Open App action, tap App and choose Unreel." = "Ajoutez l'action Ouvrir l'app, touchez App et choisissez Unreel.";
+"Go back to save it. Opening Instagram now takes you to Unreel." = "Revenez en arrière pour l'enregistrer. Ouvrir Instagram vous amène maintenant sur Unreel.";

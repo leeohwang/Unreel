@@ -33,6 +33,7 @@ targetTemplates:
       - path: Unreel/Resources
         excludes:
           - rules.json
+          - Guide/**
     entitlements:
       path: Extensions/${target_name}.entitlements
       properties:
@@ -51,7 +52,6 @@ targets:
       - package: TelemetryDeck
       - target: UnreelShield
       - target: UnreelShieldAction
-      - target: UnreelMonitor
     entitlements:
       path: Unreel/Unreel.entitlements
       properties:
@@ -102,7 +102,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.shield
 
-  # What the shield's buttons do ("Open Unreel", posting pass).
+  # What the shield's button does ("Open Unreel").
   UnreelShieldAction:
     templates: [ScreenTimeExtension]
     sources:
@@ -119,21 +119,3 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.shieldaction
-
-  # Puts the lock back when a posting pass ends.
-  UnreelMonitor:
-    templates: [ScreenTimeExtension]
-    sources:
-      - path: Extensions/Monitor
-    info:
-      path: Extensions/Monitor/Info.plist
-      properties:
-        CFBundleDisplayName: Unreel Monitor
-        CFBundleShortVersionString: $(MARKETING_VERSION)
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ActivityMonitorExtension
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.leeohwang.unreelapp.monitor
